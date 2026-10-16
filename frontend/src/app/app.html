@@ -1,0 +1,154 @@
+<div class="layout">
+  <aside class="sidebar">
+    <a class="brand" href="#" (click)="$event.preventDefault(); section = 'dashboard'">
+      <span class="brand-mark">BF</span>
+      <span><strong>BuenFreno</strong><small>CONTROL DE TALLER</small></span>
+    </a>
+    <p class="nav-label">MENÚ PRINCIPAL</p>
+    <nav>
+      @for (item of sections; track item.id) {
+        <button class="nav-item" [class.active]="section === item.id" (click)="section = item.id">
+          <span class="nav-icon">{{ item.icon }}</span>{{ item.title }}
+          @if (item.id === 'inventory' && dashboard?.lowStock) {
+            <span class="nav-count">{{ dashboard?.lowStock }}</span>
+          }
+        </button>
+      }
+    </nav>
+    <div class="sidebar-bottom"><span class="status-dot"></span> Sistema listo para trabajar</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div><span class="eyebrow">TALLER DE FRENOS</span><h1>{{ sections.find(s => s.id === section)?.title }}</h1></div>
+      <button class="refresh-button" (click)="reload()" [disabled]="loading">↻ <span>Actualizar</span></button>
+    </header>
+
+    @if (errorMessage) { <div class="alert alert-error" role="alert">{{ errorMessage }}</div> }
+    @if (successMessage) { <div class="alert alert-success" role="status">{{ successMessage }}</div> }
+    @if (loading) { <div class="loading"><span class="spinner"></span> Cargando información…</div> }
+
+    @if (!loading && section === 'dashboard') {
+      <section class="welcome">
+        <div><span class="eyebrow">RESUMEN GENERAL</span><h2>Bienvenido a tu taller</h2><p>Controla los trabajos, clientes y repuestos desde un solo lugar.</p></div>
+        <span class="welcome-icon">⚙</span>
+      </section>
+      <section class="stat-grid">
+        <article class="stat-card"><span class="stat-icon blue">♙</span><span class="stat-label">Clientes registrados</span><strong>{{ dashboard?.customers ?? 0 }}</strong><small>En la base de datos</small></article>
+        <article class="stat-card"><span class="stat-icon purple">⚙</span><span class="stat-label">Trabajos abiertos</span><strong>{{ dashboard?.openJobs ?? 0 }}</strong><small>Pendientes de entrega</small></article>
+        <article class="stat-card"><span class="stat-icon green">▦</span><span class="stat-label">Repuestos distintos</span><strong>{{ dashboard?.parts ?? 0 }}</strong><small>Productos en inventario</small></article>
+        <article class="stat-card"><span class="stat-icon orange">!</span><span class="stat-label">Repuestos por revisar</span><strong>{{ dashboard?.lowStock ?? 0 }}</strong><small>En el mínimo o por debajo</small></article>
+      </section>
+      <section class="panel">
+        <div class="panel-heading"><div><h2>Trabajos recientes</h2><p>Últimas órdenes registradas</p></div><button class="text-button" (click)="section = 'jobs'">Ver trabajos →</button></div>
+        @if (!dashboard?.recentJobs?.length) { <div class="empty-state">Todavía no hay trabajos. Primero registra un cliente y un tipo de carro.</div> }
+        @else {
+          <div class="table-wrap"><table><thead><tr><th>CLIENTE</th><th>VEHÍCULO</th><th>TRABAJO</th><th>ESTADO</th><th>TOTAL</th></tr></thead><tbody>
+            @for (job of dashboard?.recentJobs ?? []; track job.id) {
+              <tr><td class="strong">{{ job.customer_name }}</td><td>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}<small class="subline">{{ job.plate }} · {{ job.vehicle_type_name }}</small></td><td>{{ job.work_description }}</td><td><span class="badge" [class]=" 'badge ' + job.status">{{ job.status.replace('_', ' ') }}</span></td><td>{{ job.total | number:'1.2-2' }}</td></tr>
+            }
+          </tbody></table></div>
+        }
+      </section>
+    }
+
+    @if (!loading && section === 'customers') {
+      <section class="panel form-panel">
+        <div class="panel-heading"><div><h2>Registrar cliente</h2><p>Los campos marcados con * son obligatorios.</p></div></div>
+        <form class="form-grid" (ngSubmit)="save('customers', customerForm, () => customerForm = { name: '', phone: '', email: '' })">
+          <label>Nombre completo *<input name="customerName" [(ngModel)]="customerForm.name" required maxlength="120" placeholder="Ej. María López"></label>
+          <label>Teléfono<input name="customerPhone" [(ngModel)]="customerForm.phone" maxlength="40" placeholder="Ej. 555 123 4567"></label>
+          <label>Correo electrónico<input name="customerEmail" [(ngModel)]="customerForm.email" type="email" maxlength="160" placeholder="cliente@correo.com"></label>
+          <div class="form-action"><button class="primary-button" type="submit">＋ Guardar cliente</button></div>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><div><h2>Clientes</h2><p>{{ customers.length }} registros</p></div></div>
+        @if (!customers.length) { <div class="empty-state">Aún no hay clientes registrados.</div> }
+        @else { <div class="table-wrap"><table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>CORREO</th><th></th></tr></thead><tbody>
+          @for (customer of customers; track customer.id) { <tr><td class="strong">{{ customer.name }}</td><td>{{ customer.phone || '—' }}</td><td>{{ customer.email || '—' }}</td><td class="actions"><button class="delete-button" (click)="remove('customers', customer.id)">Eliminar</button></td></tr> }
+        </tbody></table></div> }
+      </section>
+    }
+
+    @if (!loading && section === 'vehicles') {
+      <section class="panel form-panel"><div class="panel-heading"><div><h2>Registrar tipo de carro</h2><p>Ejemplos: automóvil, SUV, pickup o motocicleta.</p></div></div>
+        <form class="form-grid" (ngSubmit)="save('vehicleTypes', vehicleForm, () => vehicleForm = { name: '', description: '' })">
+          <label>Tipo de carro *<input name="vehicleName" [(ngModel)]="vehicleForm.name" required maxlength="80" placeholder="Ej. SUV"></label>
+          <label>Descripción<input name="vehicleDescription" [(ngModel)]="vehicleForm.description" maxlength="240" placeholder="Características adicionales"></label>
+          <div class="form-action"><button class="primary-button" type="submit">＋ Guardar tipo</button></div>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><div><h2>Tipos de carro</h2><p>{{ vehicleTypes.length }} registros</p></div></div>
+        @if (!vehicleTypes.length) { <div class="empty-state">Registra aquí las categorías de vehículos de tus clientes.</div> }
+        @else { <div class="table-wrap"><table><thead><tr><th>TIPO</th><th>DESCRIPCIÓN</th><th></th></tr></thead><tbody>
+          @for (vehicle of vehicleTypes; track vehicle.id) { <tr><td class="strong">{{ vehicle.name }}</td><td>{{ vehicle.description || '—' }}</td><td class="actions"><button class="delete-button" (click)="remove('vehicleTypes', vehicle.id)">Eliminar</button></td></tr> }
+        </tbody></table></div> }
+      </section>
+    }
+
+    @if (!loading && section === 'inventory') {
+      <section class="panel form-panel"><div class="panel-heading"><div><h2>Agregar repuesto</h2><p>Registra las existencias y el nivel mínimo que quieres mantener.</p></div></div>
+        <form class="form-grid" (ngSubmit)="save('parts', partForm, () => partForm = { sku: '', name: '', category: '', quantity: 0, min_quantity: 0, unit_price: 0 })">
+          <label>Código / SKU *<input name="partSku" [(ngModel)]="partForm.sku" required maxlength="60" placeholder="Ej. PAST-001"></label>
+          <label>Nombre del repuesto *<input name="partName" [(ngModel)]="partForm.name" required maxlength="120" placeholder="Pastillas de freno delanteras"></label>
+          <label>Categoría<input name="partCategory" [(ngModel)]="partForm.category" maxlength="80" placeholder="Frenos"></label>
+          <label>Existencia *<input name="partQuantity" [(ngModel)]="partForm.quantity" type="number" min="0" step="1" required></label>
+          <label>Existencia mínima *<input name="partMinimum" [(ngModel)]="partForm.min_quantity" type="number" min="0" step="1" required></label>
+          <label>Precio unitario *<input name="partPrice" [(ngModel)]="partForm.unit_price" type="number" min="0" step="0.01" required></label>
+          <div class="form-action"><button class="primary-button" type="submit">＋ Guardar repuesto</button></div>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><div><h2>Inventario de repuestos</h2><p>{{ parts.length }} productos registrados</p></div></div>
+        @if (!parts.length) { <div class="empty-state">Aún no hay repuestos. Agrega el primero usando el formulario.</div> }
+        @else { <div class="table-wrap"><table><thead><tr><th>CÓDIGO</th><th>REPUESTO</th><th>CATEGORÍA</th><th>EXISTENCIA</th><th>PRECIO</th><th></th></tr></thead><tbody>
+          @for (part of parts; track part.id) { <tr><td class="muted">{{ part.sku }}</td><td class="strong">{{ part.name }}</td><td>{{ part.category || '—' }}</td><td><span [class]="part.quantity <= part.min_quantity ? 'stock-low' : ''">{{ part.quantity }}</span><small class="subline">Mínimo {{ part.min_quantity }}</small></td><td>{{ part.unit_price | number:'1.2-2' }}</td><td class="actions"><button class="delete-button" (click)="remove('parts', part.id)">Eliminar</button></td></tr> }
+        </tbody></table></div> }
+      </section>
+    }
+
+    @if (!loading && section === 'jobs') {
+      <section class="panel form-panel"><div class="panel-heading"><div><h2>Registrar trabajo</h2><p>Asocia el vehículo a un cliente y describe el servicio de frenos.</p></div></div>
+        @if (!customers.length || !vehicleTypes.length) { <div class="notice">Para registrar un trabajo, primero agrega al menos un cliente y un tipo de carro.</div> }
+        <form class="form-grid" (ngSubmit)="saveJob()">
+          <label>Cliente *<select name="jobCustomer" [(ngModel)]="jobForm.customer_id" required><option [ngValue]="0" disabled>Selecciona un cliente</option>@for (customer of customers; track customer.id) { <option [ngValue]="customer.id">{{ customer.name }}</option> }</select></label>
+          <label>Tipo de carro *<select name="jobVehicleType" [(ngModel)]="jobForm.vehicle_type_id" required><option [ngValue]="0" disabled>Selecciona el tipo</option>@for (vehicle of vehicleTypes; track vehicle.id) { <option [ngValue]="vehicle.id">{{ vehicle.name }}</option> }</select></label>
+          <label>Marca *<input name="jobMake" [(ngModel)]="jobForm.vehicle_make" required maxlength="80" placeholder="Ej. Toyota"></label>
+          <label>Modelo *<input name="jobModel" [(ngModel)]="jobForm.vehicle_model" required maxlength="80" placeholder="Ej. Corolla"></label>
+          <label>Año *<input name="jobYear" [(ngModel)]="jobForm.vehicle_year" type="number" min="1886" max="2200" required></label>
+          <label>Placa *<input name="jobPlate" [(ngModel)]="jobForm.plate" required maxlength="20" placeholder="Ej. ABC-123"></label>
+          <label class="wide-field">Descripción del trabajo *<input name="jobDescription" [(ngModel)]="jobForm.work_description" required maxlength="600" placeholder="Ej. Cambio de pastillas y revisión de discos"></label>
+          <label>Estado<select name="jobStatus" [(ngModel)]="jobForm.status"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="terminado">Terminado</option><option value="entregado">Entregado</option></select></label>
+          <label>Total<input name="jobTotal" [(ngModel)]="jobForm.total" type="number" min="0" step="0.01"></label>
+          <div class="form-action"><button class="primary-button" type="submit" [disabled]="!customers.length || !vehicleTypes.length">＋ Crear trabajo</button></div>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><div><h2>Trabajos del taller</h2><p>{{ jobs.length }} órdenes</p></div></div>
+        @if (!jobs.length) { <div class="empty-state">Aún no hay trabajos registrados.</div> }
+        @else { <div class="table-wrap"><table><thead><tr><th>CLIENTE</th><th>VEHÍCULO</th><th>SERVICIO</th><th>ESTADO</th><th>TOTAL</th><th></th></tr></thead><tbody>
+          @for (job of jobs; track job.id) { <tr><td class="strong">{{ job.customer_name }}</td><td>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}<small class="subline">{{ job.plate }} · {{ job.vehicle_type_name }}</small></td><td>{{ job.work_description }}</td><td><select class="status-select" [value]="job.status" (change)="updateJobStatus(job, $event)"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="terminado">Terminado</option><option value="entregado">Entregado</option></select></td><td>{{ job.total | number:'1.2-2' }}</td><td class="actions"><button class="delete-button" (click)="remove('jobs', job.id)">Eliminar</button></td></tr> }
+        </tbody></table></div> }
+      </section>
+    }
+
+    @if (!loading && section === 'maintenance') {
+      <section class="panel form-panel"><div class="panel-heading"><div><h2>Agregar secuencia de mantenimiento</h2><p>Organiza las revisiones recomendadas por tipo de carro e intervalo de kilómetros.</p></div></div>
+        @if (!vehicleTypes.length) { <div class="notice">Primero agrega un tipo de carro.</div> }
+        <form class="form-grid" (ngSubmit)="save('maintenance', maintenanceForm, () => maintenanceForm = { vehicle_type_id: 0, position: 1, name: '', interval_km: 10000, details: '' })">
+          <label>Tipo de carro *<select name="maintenanceVehicleType" [(ngModel)]="maintenanceForm.vehicle_type_id" required><option [ngValue]="0" disabled>Selecciona el tipo</option>@for (vehicle of vehicleTypes; track vehicle.id) { <option [ngValue]="vehicle.id">{{ vehicle.name }}</option> }</select></label>
+          <label>Orden de la secuencia *<input name="maintenancePosition" [(ngModel)]="maintenanceForm.position" type="number" min="1" step="1" required></label>
+          <label>Trabajo de mantenimiento *<input name="maintenanceName" [(ngModel)]="maintenanceForm.name" required maxlength="120" placeholder="Revisión de pastillas"></label>
+          <label>Intervalo en kilómetros *<input name="maintenanceInterval" [(ngModel)]="maintenanceForm.interval_km" type="number" min="1" step="1" required></label>
+          <label class="wide-field">Detalles<input name="maintenanceDetails" [(ngModel)]="maintenanceForm.details" maxlength="600" placeholder="Inspeccionar desgaste y limpiar componentes"></label>
+          <div class="form-action"><button class="primary-button" type="submit" [disabled]="!vehicleTypes.length">＋ Guardar secuencia</button></div>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><div><h2>Secuencias de mantenimiento</h2><p>{{ maintenance.length }} pasos registrados</p></div></div>
+        @if (!maintenance.length) { <div class="empty-state">Agrega un plan con los pasos de mantenimiento para cada tipo de carro.</div> }
+        @else { <div class="table-wrap"><table><thead><tr><th>PASO</th><th>TIPO DE CARRO</th><th>TRABAJO</th><th>INTERVALO</th><th>DETALLES</th><th></th></tr></thead><tbody>
+          @for (step of maintenance; track step.id) { <tr><td><span class="step-number">{{ step.position }}</span></td><td>{{ step.vehicle_type_name }}</td><td class="strong">{{ step.name }}</td><td>Cada {{ step.interval_km | number }} km</td><td>{{ step.details || '—' }}</td><td class="actions"><button class="delete-button" (click)="remove('maintenance', step.id)">Eliminar</button></td></tr> }
+        </tbody></table></div> }
+      </section>
+    }
+    <footer class="footer">BuenFreno · Sistema inicial de control de taller · Guarda tus respaldos regularmente.</footer>
+  </main>
+</div>

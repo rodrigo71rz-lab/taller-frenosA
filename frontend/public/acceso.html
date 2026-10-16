@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173e6b">
+  <title>BuenFreno | Acceso al sistema</title>
+  <style>
+    :root { color-scheme:light; --ink:#202d3d; --muted:#788596; --line:#e8edf2; --blue:#214f80; --bg:#f5f7fa }
+    * { box-sizing:border-box }
+    body { min-height:100vh; margin:0; display:grid; place-items:center; padding:20px; background:var(--bg); color:var(--ink); font:14px/1.5 "Segoe UI",Arial,sans-serif }
+    main { width:min(540px,100%); padding:30px; border:1px solid var(--line); border-radius:14px; background:#fff; box-shadow:0 12px 36px #193d6b0d }
+    .brand { display:flex; align-items:center; gap:12px }
+    .mark { width:44px; height:44px; display:grid; place-items:center; border-radius:12px; background:#193d6b; color:#fff; font-weight:800 }
+    .eyebrow { color:#8994a2; font-size:10px; font-weight:700; letter-spacing:.12em }
+    h1 { margin:3px 0 0; font-size:24px; letter-spacing:-.04em }
+    h2 { margin:24px 0 5px; font-size:17px }
+    p { margin:5px 0 0; color:var(--muted); font-size:12px }
+    .links { display:grid; gap:10px; margin-top:20px }
+    a { min-height:46px; padding:12px 15px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid var(--line); border-radius:8px; color:var(--blue); font-weight:650; text-decoration:none }
+    a:hover { border-color:#b7cbe0; background:#f7faff }
+    a.primary { border-color:var(--blue); background:var(--blue); color:#fff }
+    a.primary:hover { background:#193e66 }
+    .status { margin-top:19px; padding:10px 12px; border-radius:7px; background:#f2f4f7; color:#566477; font-size:12px }
+    .status::before { display:inline-block; width:7px; height:7px; margin-right:8px; border-radius:50%; background:#96a0ad; content:"" }
+    .status.online { background:#effaf3; color:#287149 }
+    .status.online::before { background:#37a878 }
+    .status.offline { background:#fff3f3; color:#a23e3e }
+    .status.offline::before { background:#c55d5d }
+    .help { margin-top:16px; padding-top:15px; border-top:1px solid var(--line) }
+    code { color:#43546a; font-size:11px }
+    @media(max-width:480px) { main { padding:22px } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand"><span class="mark">BF</span><div><span class="eyebrow">CONTROL DE TALLER</span><h1>BuenFreno</h1></div></div>
+    <h2>Acceso al sistema</h2>
+    <p>Elige la pantalla que quieres abrir. Mantén el backend y el frontend en ejecución para cargar los datos.</p>
+    <nav class="links" aria-label="Páginas del sistema">
+      <a class="primary" href="/">Abrir aplicación completa <span aria-hidden="true">→</span></a>
+      <a href="/visualizar.html">Abrir vista rápida <span aria-hidden="true">→</span></a>
+    </nav>
+    <div id="status" class="status" role="status" aria-live="polite">Comprobando conexión con la API…</div>
+    <p class="help">Si la API está desconectada, ejecuta <code>npm run dev</code> en <code>D:\taller\backend</code>.</p>
+  </main>
+  <script>
+    (() => {
+      const status = document.getElementById('status');
+      fetch('http://localhost:3000/api/health')
+        .then(response => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.json();
+        })
+        .then(data => {
+          if (data.status !== 'ok') throw new Error('API no disponible');
+          status.className = 'status online';
+          status.textContent = 'API conectada. Puedes abrir el sistema.';
+        })
+        .catch(() => {
+          status.className = 'status offline';
+          status.textContent = 'API desconectada. Inicia PostgreSQL y el backend para cargar los datos.';
+        });
+    })();
+  </script>
+</body>
+</html>

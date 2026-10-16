@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173e6b">
+  <title>BuenFreno | Control del taller</title>
+  <style>
+    :root { color-scheme: light; --ink:#202d3d; --muted:#788596; --line:#e8edf2; --blue:#214f80; --bg:#f5f7fa; --white:#fff; --red:#a23e3e; }
+    * { box-sizing:border-box }
+    body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.5 "Segoe UI",Arial,sans-serif }
+    button,input,select,textarea { font:inherit }
+    button { cursor:pointer }
+    .layout { min-height:100vh }
+    aside { position:fixed; inset:0 auto 0 0; z-index:2; width:245px; padding:25px 15px; background:#fff; border-right:1px solid var(--line); display:flex; flex-direction:column }
+    .brand { display:flex; align-items:center; gap:11px; margin:0 5px 30px; color:var(--ink); text-decoration:none }
+    .brand-mark { width:40px; height:40px; display:grid; place-items:center; border-radius:12px; background:#193d6b; color:white; font-weight:800 }
+    .brand b,.brand small { display:block }.brand small { color:#8792a2; font-size:9px; letter-spacing:.12em }
+    .nav-label,.eyebrow { color:#8994a2; font-size:10px; font-weight:700; letter-spacing:.12em }
+    .nav-label { margin:0 9px 10px }
+    nav { display:grid; gap:5px }
+    .nav-button { display:flex; align-items:center; gap:11px; min-height:42px; padding:0 11px; border:0; border-radius:8px; background:transparent; color:#566274; text-align:left }
+    .nav-button:hover { background:#f5f7fa }.nav-button.active { background:#edf3fb; color:var(--blue); font-weight:650 }
+    .nav-icon { width:20px; text-align:center; font-size:16px }
+    .nav-bottom { margin-top:auto; padding:14px 7px 0; border-top:1px solid var(--line); color:var(--muted); font-size:11px }
+    .dot { display:inline-block; width:7px; height:7px; margin-right:6px; border-radius:50%; background:#37a878 }
+    main { max-width:1600px; margin-left:245px; padding:29px 38px 22px }
+    header { display:flex; align-items:center; justify-content:space-between; margin-bottom:23px }
+    h1 { margin:4px 0 0; font-size:25px; letter-spacing:-.04em }
+    h2 { margin:0; font-size:16px } p { color:var(--muted) }
+    .refresh,.primary,.secondary { min-height:36px; padding:7px 13px; border:1px solid var(--line); border-radius:7px; background:#fff; color:#43546a }
+    .primary { border:0; background:var(--blue); color:#fff; font-weight:600 }
+    .primary:hover { background:#193e66 }.primary:disabled { opacity:.5; cursor:wait }
+    .welcome { display:flex; justify-content:space-between; align-items:center; min-height:135px; padding:24px 28px; border-radius:12px; background:linear-gradient(105deg,#173e6b,#286293); color:white }
+    .welcome .eyebrow { color:#bfd2e6 }.welcome h2 { margin:8px 0 4px; font-size:22px }.welcome p { margin:0; color:#d5e0ec }
+    .welcome-icon { width:60px; height:60px; display:grid; place-items:center; border:1px solid #ffffff45; border-radius:50%; font-size:29px }
+    .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px; margin:16px 0 }
+    .stat,.panel { border:1px solid var(--line); border-radius:10px; background:#fff }
+    .stat { min-height:112px; padding:16px }
+    .stat-label { display:block; color:var(--muted); font-size:11px }.stat strong { display:block; margin-top:7px; font-size:26px }
+    .panel { margin-top:16px; padding:19px 21px }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px }
+    .panel-head p { margin:4px 0 0; font-size:11px }
+    .form-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; align-items:end }
+    label { display:grid; gap:5px; color:#566477; font-size:11px; font-weight:600 }
+    input,select,textarea { width:100%; min-height:36px; padding:7px 9px; border:1px solid #dfe5eb; border-radius:6px; outline:none; background:white; color:var(--ink); font-size:12px }
+    textarea { min-height:65px; resize:vertical }
+    input:focus,select:focus,textarea:focus { border-color:#6792bf; box-shadow:0 0 0 2px #e8f1fa }
+    .wide { grid-column:span 2 }.form-actions { display:flex; align-items:end }
+    .table-wrap { overflow-x:auto }
+    table { width:100%; border-collapse:collapse; text-align:left }
+    th { padding:9px; border-bottom:1px solid #edf0f3; color:#8792a0; font-size:9px; letter-spacing:.08em; white-space:nowrap }
+    td { padding:11px 9px; border-bottom:1px solid #f0f2f5; color:#586576; font-size:11px; vertical-align:middle }
+    tbody tr:last-child td { border-bottom:0 }.strong { color:#253346; font-weight:600 }
+    .sub { display:block; margin-top:3px; color:#929ca9; font-size:10px }
+    .empty { padding:24px 10px; color:#8894a2; text-align:center; font-size:12px }
+    .delete { border:0; background:transparent; color:#a75353; font-size:10px }
+    .delete:hover { text-decoration:underline }
+    .badge { padding:4px 7px; border-radius:20px; background:#f0f3f6; color:#586576; font-size:9px; white-space:nowrap }
+    .badge.pendiente { background:#fff4e5;color:#b97421 }.badge.en_proceso { background:#eaf2fd;color:#386eaa }.badge.terminado { background:#eaf7ef;color:#338255 }.badge.entregado { background:#f0edfa;color:#6b56a0 }
+    .low { color:#bd6425; font-weight:700 }.message { margin:0 0 14px; padding:10px 13px; border-radius:7px; font-size:12px }.error { border:1px solid #f1caca;background:#fff3f3;color:var(--red) }.success { border:1px solid #cbe9d8;background:#effaf3;color:#287149 }
+    .loading { padding:20px 0;color:var(--muted) }.hidden { display:none!important }
+    footer { padding:23px 0 7px; color:#9aa3ae; font-size:10px; text-align:center }
+    @media(max-width:1000px) { main{padding-right:22px;padding-left:22px}.stats{grid-template-columns:repeat(2,1fr)} }
+    @media(max-width:700px) { aside{position:static;width:auto;padding:12px;border-right:0;border-bottom:1px solid var(--line)}.brand{margin:0 5px 10px}nav{display:flex;overflow-x:auto}.nav-button{flex:0 0 auto;min-height:35px;padding:0 9px;font-size:11px}.nav-icon,.nav-label,.nav-bottom{display:none}main{margin:0;padding:20px 13px}.welcome{padding:19px}.welcome-icon{display:none}.panel{padding:15px 12px}.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.form-actions{grid-column:auto} }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside>
+      <a class="brand" href="#" id="home-link"><span class="brand-mark">BF</span><span><b>BuenFreno</b><small>CONTROL DE TALLER</small></span></a>
+      <p class="nav-label">MENÚ PRINCIPAL</p>
+      <nav id="navigation" aria-label="Secciones"></nav>
+      <div class="nav-bottom"><span class="dot"></span><span id="connection-label">Comprobando conexión…</span></div>
+    </aside>
+    <main>
+      <header><div><span class="eyebrow">TALLER DE FRENOS</span><h1 id="page-title">Información</h1></div><button id="refresh" class="refresh" type="button">↻ Actualizar</button></header>
+      <div id="message" class="message hidden" role="status"></div>
+      <div id="loading" class="loading">Conectando con la API del taller…</div>
+      <section id="content" class="hidden"></section>
+      <footer>BuenFreno · Sistema de control de taller · Mantén respaldos de tu base de datos.</footer>
+    </main>
+  </div>
+  <script>
+    (() => {
+      const API = 'http://localhost:3000/api';
+      const sections = [
+        { id:'dashboard', title:'Información', icon:'⌂' },
+        { id:'parts', title:'Repuestos', icon:'▦' },
+        { id:'jobs', title:'Trabajos', icon:'⚙' },
+        { id:'customers', title:'Clientes', icon:'♙' },
+        { id:'vehicleTypes', title:'Tipos de carro', icon:'▰' },
+        { id:'maintenance', title:'Mantenimiento', icon:'↻' }
+      ];
+      const states = ['pendiente','en_proceso','terminado','entregado'];
+      const stateLabels = { pendiente:'Pendiente', en_proceso:'En proceso', terminado:'Terminado', entregado:'Entregado' };
+      const fields = {
+        customers: [
+          { key:'name', label:'Nombre completo *', required:true, max:120, placeholder:'Ej. María López' },
+          { key:'phone', label:'Teléfono', max:40, placeholder:'555 123 4567' },
+          { key:'email', label:'Correo electrónico', type:'email', max:160, placeholder:'cliente@correo.com' }
+        ],
+        vehicleTypes: [
+          { key:'name', label:'Tipo de carro *', required:true, max:80, placeholder:'Ej. SUV' },
+          { key:'description', label:'Descripción', max:240, placeholder:'Características adicionales' }
+        ],
+        parts: [
+          { key:'sku', label:'Código / SKU *', required:true, max:60, placeholder:'PAST-001' },
+          { key:'name', label:'Nombre del repuesto *', required:true, max:120, placeholder:'Pastillas de freno delanteras' },
+          { key:'category', label:'Categoría', max:80, placeholder:'Frenos' },
+          { key:'quantity', label:'Existencia *', type:'number', required:true, min:0, step:1 },
+          { key:'min_quantity', label:'Existencia mínima *', type:'number', required:true, min:0, step:1 },
+          { key:'unit_price', label:'Precio unitario *', type:'number', required:true, min:0, step:0.01 }
+        ],
+        jobs: [
+          { key:'customer_id', label:'Cliente *', type:'customer', required:true },
+          { key:'vehicle_type_id', label:'Tipo de carro *', type:'vehicle', required:true },
+          { key:'vehicle_make', label:'Marca *', required:true, max:80, placeholder:'Toyota' },
+          { key:'vehicle_model', label:'Modelo *', required:true, max:80, placeholder:'Corolla' },
+          { key:'vehicle_year', label:'Año *', type:'number', required:true, min:1886, max:2200, step:1, value:new Date().getFullYear() },
+          { key:'plate', label:'Placa *', required:true, max:20, placeholder:'ABC-123' },
+          { key:'work_description', label:'Descripción del trabajo *', required:true, max:600, placeholder:'Cambio de pastillas y revisión de discos', wide:true },
+          { key:'status', label:'Estado', type:'status', value:'pendiente' },
+          { key:'total', label:'Total', type:'number', min:0, step:0.01, value:0 }
+        ],
+        maintenance: [
+          { key:'vehicle_type_id', label:'Tipo de carro *', type:'vehicle', required:true },
+          { key:'position', label:'Orden de la secuencia *', type:'number', required:true, min:1, step:1, value:1 },
+          { key:'name', label:'Trabajo de mantenimiento *', required:true, max:120, placeholder:'Revisión de pastillas' },
+          { key:'interval_km', label:'Intervalo en kilómetros *', type:'number', required:true, min:1, step:1, value:10000 },
+          { key:'details', label:'Detalles', max:600, placeholder:'Inspeccionar desgaste y limpiar componentes', wide:true }
+        ]
+      };
+      const columns = {
+        customers: [
+          ['name','Nombre'], ['phone','Teléfono'], ['email','Correo']
+        ],
+        vehicleTypes: [
+          ['name','Tipo'], ['description','Descripción']
+        ],
+        parts: [
+          ['sku','Código'], ['name','Repuesto'], ['category','Categoría'], ['quantity','Existencia'], ['unit_price','Precio']
+        ],
+        jobs: [
+          ['customer_name','Cliente'], ['vehicle','Vehículo'], ['work_description','Servicio'], ['status','Estado'], ['total','Total']
+        ],
+        maintenance: [
+          ['position','Paso'], ['vehicle_type_name','Tipo de carro'], ['name','Trabajo'], ['interval_km','Intervalo'], ['details','Detalles']
+        ]
+      };
+      let current = 'dashboard';
+      let cache = { customers:[], vehicleTypes:[], parts:[], jobs:[], maintenance:[], dashboard:null };
+      const nav = document.getElementById('navigation');
+      const content = document.getElementById('content');
+      const loading = document.getElementById('loading');
+      const message = document.getElementById('message');
+      const title = document.getElementById('page-title');
+      const connection = document.getElementById('connection-label');
+
+      function node(tag, className, text) {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (text !== undefined && text !== null) element.textContent = String(text);
+        return element;
+      }
+      function showMessage(text, kind) {
+        message.textContent = text;
+        message.className = `message ${kind}`;
+      }
+      function clearMessage() { message.textContent = ''; message.className = 'message hidden'; }
+      async function request(path, options) {
+        let response;
+        try {
+          response = await fetch(`${API}${path}`, {
+            ...options,
+            headers: { 'Content-Type':'application/json', ...(options && options.headers) }
+          });
+        } catch {
+          throw new Error('No se pudo conectar con la API. Comprueba que PostgreSQL y el servidor Node.js estén activos.');
+        }
+        if (!response.ok) {
+          let detail = `Error HTTP ${response.status}`;
+          try { const body = await response.json(); if (body.error) detail = body.error; } catch {}
+          throw new Error(detail);
+        }
+        return response.status === 204 ? null : response.json();
+      }
+      function renderNavigation() {
+        nav.replaceChildren();
+        for (const section of sections) {
+          const button = node('button','nav-button' + (current === section.id ? ' active' : ''));
+          button.type = 'button';
+          const icon = node('span','nav-icon',section.icon);
+          button.append(icon,document.createTextNode(section.title));
+          button.addEventListener('click',() => { current = section.id; render(); });
+          nav.append(button);
+        }
+      }
+      function addCell(row, value, strong, subline) {
+        const cell = node('td');
+        if (strong) cell.append(node('span','strong',value));
+        else cell.textContent = value === null || value === '' || value === undefined ? '—' : String(value);
+        if (subline) cell.append(node('small','sub',subline));
+        row.append(cell);
+      }
+      function displayValue(resource, key, item) {
+        if (key === 'vehicle') return `${item.vehicle_year} ${item.vehicle_make} ${item.vehicle_model}`;
+        if (key === 'status') return stateLabels[item.status] || item.status;
+        if (key === 'interval_km') return `Cada ${Number(item.interval_km).toLocaleString('es')} km`;
+        if (key === 'unit_price' || key === 'total') return Number(item[key]).toLocaleString('es',{minimumFractionDigits:2,maximumFractionDigits:2});
+        return item[key];
+      }
+      function renderTable(resource, items) {
+        if (!items.length) return node('div','empty','Todavía no hay registros. Agrega el primero con el formulario.');
+        const wrap = node('div','table-wrap');
+        const table = node('table');
+        const head = node('thead');
+        const header = node('tr');
+        for (const [,label] of columns[resource]) header.append(node('th','',label.toUpperCase()));
+        header.append(node('th','',''));
+        head.append(header);
+        const body = node('tbody');
+        for (const item of items) {
+          const row = node('tr');
+          for (const [key] of columns[resource]) {
+            const value = displayValue(resource,key,item);
+            if (key === 'status' && resource === 'jobs') {
+              const cell = node('td');
+              const select = node('select','');
+              select.setAttribute('aria-label','Cambiar estado del trabajo');
+              for (const state of states) {
+                const option = node('option','',stateLabels[state]);
+                option.value = state;
+                option.selected = item.status === state;
+                select.append(option);
+              }
+              select.addEventListener('change',() => updateJob(item,select.value));
+              cell.append(select); row.append(cell);
+            } else if (key === 'quantity' && resource === 'parts') {
+              const cell = node('td');
+              cell.append(node('span',Number(item.quantity) <= Number(item.min_quantity) ? 'low' : '',item.quantity));
+              cell.append(node('small','sub',`Mínimo ${item.min_quantity}`));
+              row.append(cell);
+            } else {
+              const sub = key === 'vehicle' ? `${item.plate} · ${item.vehicle_type_name}` : null;
+              addCell(row,value,['name','customer_name','sku'].includes(key),sub);
+            }
+          }
+          const actions = node('td');
+          const remove = node('button','delete','Eliminar');
+          remove.type = 'button';
+          remove.addEventListener('click',() => deleteRecord(resource,item.id));
+          actions.append(remove); row.append(actions); body.append(row);
+        }
+        table.append(head,body); wrap.append(table);
+        return wrap;
+      }
+      function makeControl(field) {
+        const label = node('label','',field.label);
+        let control;
+        if (field.type === 'customer' || field.type === 'vehicle' || field.type === 'status') {
+          control = node('select');
+          const prompt = node('option','',field.type === 'customer' ? 'Selecciona un cliente' : field.type === 'vehicle' ? 'Selecciona el tipo' : 'Selecciona el estado');
+          prompt.value = '';
+          prompt.disabled = true;
+          prompt.selected = true;
+          control.append(prompt);
+          const options = field.type === 'customer' ? cache.customers.map(x => [x.id,x.name]) :
+            field.type === 'vehicle' ? cache.vehicleTypes.map(x => [x.id,x.name]) :
+            states.map(x => [x,stateLabels[x]]);
+          for (const [value,text] of options) {
+            const option = node('option','',text);
+            option.value = String(value);
+            if (String(field.value) === String(value)) option.selected = true;
+            control.append(option);
+          }
+          if (field.type === 'customer' && !cache.customers.length) control.disabled = true;
+          if (field.type === 'vehicle' && !cache.vehicleTypes.length) control.disabled = true;
+        } else {
+          control = node('input');
+          control.type = field.type || 'text';
+          if (field.placeholder) control.placeholder = field.placeholder;
+          if (field.min !== undefined) control.min = String(field.min);
+          if (field.max !== undefined) control.max = String(field.max);
+          if (field.step !== undefined) control.step = String(field.step);
+          if (field.value !== undefined) control.value = String(field.value);
+          if (field.type === 'email') control.autocomplete = 'email';
+        }
+        control.name = field.key;
+        control.required = Boolean(field.required);
+        if (field.max && field.type !== 'email') control.maxLength = field.max;
+        label.append(control);
+        if (field.wide) label.classList.add('wide');
+        return label;
+      }
+      function renderForm(resource) {
+        const panel = node('section','panel');
+        const heading = node('div','panel-head');
+        const titleBlock = node('div');
+        titleBlock.append(node('h2','',resource === 'jobs' ? 'Registrar trabajo' : resource === 'maintenance' ? 'Agregar secuencia de mantenimiento' : resource === 'parts' ? 'Agregar repuesto' : resource === 'customers' ? 'Registrar cliente' : 'Registrar tipo de carro'));
+        titleBlock.append(node('p','',resource === 'jobs' ? 'Asocia el vehículo a un cliente y describe el servicio.' : resource === 'maintenance' ? 'Organiza las revisiones por vehículo e intervalo.' : 'Los campos con * son obligatorios.'));
+        heading.append(titleBlock); panel.append(heading);
+        if (resource === 'jobs' && (!cache.customers.length || !cache.vehicleTypes.length)) panel.append(node('p','message error','Primero registra al menos un cliente y un tipo de carro.'));
+        if (resource === 'maintenance' && !cache.vehicleTypes.length) panel.append(node('p','message error','Primero registra un tipo de carro.'));
+        const form = node('form','form-grid');
+        for (const field of fields[resource]) form.append(makeControl(field));
+        const action = node('div','form-actions');
+        const submit = node('button','primary','＋ Guardar');
+        submit.type = 'submit';
+        if ((resource === 'jobs' && (!cache.customers.length || !cache.vehicleTypes.length)) || (resource === 'maintenance' && !cache.vehicleTypes.length)) submit.disabled = true;
+        action.append(submit); form.append(action);
+        form.addEventListener('submit',async event => {
+          event.preventDefault(); clearMessage(); submit.disabled = true;
+          const data = Object.fromEntries(new FormData(form));
+          for (const field of fields[resource]) {
+            if (field.type === 'number') data[field.key] = Number(data[field.key] || 0);
+            else if (field.type === 'customer' || field.type === 'vehicle') data[field.key] = Number(data[field.key]);
+          }
+          try {
+            await request(`/${resource}`,{method:'POST',body:JSON.stringify(data)});
+            showMessage('Registro guardado correctamente.','success');
+            await loadData();
+            render();
+          } catch (error) {
+            showMessage(error.message,'error'); submit.disabled = false;
+          }
+        });
+        panel.append(form);
+        return panel;
+      }
+      function renderDashboard() {
+        const d = cache.dashboard;
+        const welcome = node('section','welcome');
+        const text = node('div');
+        text.append(node('span','eyebrow','RESUMEN GENERAL'),node('h2','','Bienvenido a tu taller'),node('p','','Controla trabajos, clientes y repuestos desde un solo lugar.'));
+        welcome.append(text,node('span','welcome-icon','⚙'));
+        const stats = node('section','stats');
+        for (const [label,value] of [['Clientes registrados',d.customers],['Trabajos abiertos',d.openJobs],['Repuestos distintos',d.parts],['Repuestos por revisar',d.lowStock]]) {
+          const card = node('article','stat');
+          card.append(node('span','stat-label',label),node('strong','',value));
+          stats.append(card);
+        }
+        const panel = node('section','panel');
+        const heading = node('div','panel-head');
+        const block = node('div');
+        block.append(node('h2','','Trabajos recientes'),node('p','','Últimas órdenes registradas'));
+        heading.append(block); panel.append(heading);
+        panel.append(renderTable('jobs',d.recentJobs));
+        content.replaceChildren(welcome,stats,panel);
+      }
+      function render() {
+        renderNavigation();
+        const section = sections.find(s => s.id === current);
+        title.textContent = section.title;
+        if (current === 'dashboard') renderDashboard();
+        else {
+          const panel = renderForm(current);
+          const list = node('section','panel');
+          const heading = node('div','panel-head');
+          const block = node('div');
+          block.append(node('h2','',current === 'parts' ? 'Inventario de repuestos' : current === 'jobs' ? 'Trabajos del taller' : current === 'maintenance' ? 'Secuencias de mantenimiento' : current === 'customers' ? 'Clientes registrados' : 'Tipos de carro'));
+          block.append(node('p','',`${cache[current].length} registros`));
+          heading.append(block); list.append(heading,renderTable(current,cache[current]));
+          content.replaceChildren(panel,list);
+        }
+        content.classList.remove('hidden');
+      }
+      async function loadData() {
+        loading.classList.remove('hidden'); content.classList.add('hidden');
+        try {
+          const [dashboard,customers,vehicleTypes,parts,jobs,maintenance] = await Promise.all([
+            request('/dashboard'),request('/customers'),request('/vehicleTypes'),request('/parts'),request('/jobs'),request('/maintenance')
+          ]);
+          cache = { dashboard,customers,vehicleTypes,parts,jobs,maintenance };
+          connection.textContent = 'API conectada';
+          loading.classList.add('hidden');
+          render();
+        } catch (error) {
+          loading.textContent = error.message;
+          connection.textContent = 'API desconectada';
+          showMessage(error.message,'error');
+        }
+      }
+      async function deleteRecord(resource,id) {
+        if (!window.confirm('¿Seguro que deseas eliminar este registro?')) return;
+        clearMessage();
+        try {
+          await request(`/${resource}/${id}`,{method:'DELETE'});
+          showMessage('Registro eliminado.','success');
+          await loadData();
+        } catch (error) { showMessage(error.message,'error'); }
+      }
+      async function updateJob(job,status) {
+        clearMessage();
+        const data = {
+          customer_id:job.customer_id,vehicle_type_id:job.vehicle_type_id,vehicle_make:job.vehicle_make,
+          vehicle_model:job.vehicle_model,vehicle_year:job.vehicle_year,plate:job.plate,
+          work_description:job.work_description,status,total:Number(job.total)
+        };
+        try {
+          await request(`/jobs/${job.id}`,{method:'PUT',body:JSON.stringify(data)});
+          showMessage('Estado del trabajo actualizado.','success');
+          await loadData();
+        } catch (error) { showMessage(error.message,'error'); await loadData(); }
+      }
+      document.getElementById('refresh').addEventListener('click',() => { clearMessage(); loadData(); });
+      document.getElementById('home-link').addEventListener('click',event => { event.preventDefault(); current='dashboard'; render(); });
+      loadData();
+    })();
+  </script>
+</body>
+</html>
