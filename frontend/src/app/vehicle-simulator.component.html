@@ -1,0 +1,103 @@
+<section class="vehicle-sim">
+  <div class="vehicle-sim-intro">
+    <div>
+      <span class="eyebrow">SIMULACIÓN INTERACTIVA</span>
+      <h2>Telemetría visual y dinámica 2D</h2>
+      <p>Controla el motor, el clima y algunos indicadores para explorar el comportamiento del vehículo.</p>
+    </div>
+    <span class="vehicle-sim-badge"><span></span> MODELO ILUSTRATIVO</span>
+  </div>
+
+  <div class="vehicle-sim-disclaimer"><strong>Simulación educativa:</strong> las lecturas y alertas son ilustrativas; no son mediciones de un vehículo real ni sustituyen el diagnóstico de un técnico.</div>
+
+  <div class="vehicle-sim-layout">
+    <div>
+      <section class="vehicle-sim-panel">
+        <div class="vehicle-sim-panel-heading">
+          <h3>▣ &nbsp; Telemetría visual y dinámica 2D</h3>
+          <span class="vehicle-sim-climate-label">Clima: {{ climate }} ({{ climateTemperatures[climate] }}°C)</span>
+        </div>
+        <div class="vehicle-sim-scene" [class.engine-on]="engineRunning" [style.--road-duration]="(2 - throttle * 0.014 < 0.34 ? 0.34 : 2 - throttle * 0.014) + 's'">
+          <div class="vehicle-sim-scene-top">
+            <span>Carga ECU: <strong>{{ engineLoad | number:'1.0-0' }}%</strong> | Boost: <strong>{{ boostPressure | number:'1.1-1' }} bar</strong></span>
+            <span>Velocidad: <strong>{{ speed | number:'1.1-1' }} km/h</strong></span>
+          </div>
+          <svg class="vehicle-sim-car" viewBox="0 0 460 190" role="img" aria-label="Ilustración de un automóvil">
+            <defs>
+              <linearGradient id="vehicleSimPaint" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#54c9ff"/><stop offset="1" stop-color="#2974e8"/></linearGradient>
+              <linearGradient id="vehicleSimGlass" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#d5f4ff"/><stop offset="1" stop-color="#83d6f5"/></linearGradient>
+            </defs>
+            <ellipse cx="229" cy="151" rx="171" ry="16" fill="#070d18" opacity=".7"/>
+            <path d="M49 114 Q62 108 82 105 L126 100 L169 52 Q177 43 190 42 L284 42 Q299 43 311 55 L354 101 L402 108 Q421 112 425 128 L422 144 Q419 151 407 151 L63 151 Q47 151 42 141 L39 128 Q39 118 49 114Z" fill="url(#vehicleSimPaint)" stroke="#77d9ff" stroke-width="3"/>
+            <path d="M140 96 L177 58 Q182 52 192 52 L222 52 L222 96Z" fill="url(#vehicleSimGlass)" stroke="#2583d4" stroke-width="3"/>
+            <path d="M232 52 L281 52 Q291 52 299 61 L330 96 L232 96Z" fill="url(#vehicleSimGlass)" stroke="#2583d4" stroke-width="3"/>
+            <path d="M231 50 L231 98" stroke="#1454a6" stroke-width="3"/>
+            <path d="M350 106 L393 112 Q406 114 410 124 L410 132 L355 132Z" fill="#f7cf67"/>
+            <path d="M52 121 L84 117 L80 132 L47 133Z" fill="#f77983"/>
+            <path d="M102 105 L135 102 M333 102 L361 105" stroke="#a4eaff" stroke-width="2" opacity=".8"/>
+            <g class="vehicle-sim-wheel" transform="translate(124 145)"><circle r="35" fill="#111722" stroke="#3b4b62" stroke-width="5"/><circle r="22" fill="#8495aa"/><circle r="14" fill="#354258"/><path d="M0-19V19M-19 0H19M-13-13L13 13M13-13L-13 13" stroke="#cbd8e8" stroke-width="4" stroke-linecap="round"/></g>
+            <g class="vehicle-sim-wheel" transform="translate(350 145)"><circle r="35" fill="#111722" stroke="#3b4b62" stroke-width="5"/><circle r="22" fill="#8495aa"/><circle r="14" fill="#354258"/><path d="M0-19V19M-19 0H19M-13-13L13 13M13-13L-13 13" stroke="#cbd8e8" stroke-width="4" stroke-linecap="round"/></g>
+          </svg>
+          <span class="vehicle-sim-caption">MODELO ILUSTRATIVO</span>
+          <div class="vehicle-sim-road"><span></span></div>
+        </div>
+        <div class="vehicle-sim-controls">
+          <button class="vehicle-sim-engine-button" [class.running]="engineRunning" type="button" [attr.aria-pressed]="engineRunning" (click)="toggleEngine()">{{ engineRunning ? '■ Apagar motor' : '⚡ Encender motor' }}</button>
+          <label class="vehicle-sim-climate-control">Clima
+            <select [ngModel]="climate" (ngModelChange)="climateChanged($event)" aria-label="Seleccionar clima">
+              <option value="Templado">Templado (22°C)</option>
+              <option value="Caluroso">Caluroso (34°C)</option>
+              <option value="Frío">Frío (8°C)</option>
+              <option value="Lluvioso">Lluvioso (18°C)</option>
+            </select>
+          </label>
+        </div>
+        <label class="vehicle-sim-throttle">
+          <span>Acelerador</span>
+          <input type="range" min="0" max="100" step="1" [(ngModel)]="throttle" aria-label="Acelerador de 0 a 100 por ciento">
+          <strong>{{ throttle }}%</strong>
+        </label>
+      </section>
+
+      <section class="vehicle-sim-panel vehicle-sim-maintenance">
+        <div class="vehicle-sim-panel-heading"><h3>⚒ &nbsp; Mantenimiento preventivo</h3><strong>Costo: ${{ maintenanceCost | number }} USD</strong></div>
+        <div class="vehicle-sim-service-grid">
+          @for (option of maintenanceOptions; track option.key) {
+            <button class="vehicle-sim-service" [class.selected]="hasService(option.key)" type="button" [attr.aria-pressed]="hasService(option.key)" (click)="toggleService(option.key)">
+              <strong>{{ option.title }} (${{ option.cost | number }})</strong>
+              <small>
+                @if (option.key === 'oil') { SOH: {{ oilHealth | number:'1.0-0' }}% }
+                @else if (option.key === 'air') { Restricción: {{ filterRestriction | number:'1.1-1' }}% }
+                @else { {{ option.detail }} }
+              </small>
+            </button>
+          }
+        </div>
+      </section>
+    </div>
+
+    <section class="vehicle-sim-panel vehicle-sim-dashboard">
+      <div class="vehicle-sim-panel-heading"><h3>▣ &nbsp; Tablero y testigos</h3><span>HORÓMETRO: <strong>{{ engineHours | number:'1.2-2' }} h</strong></span></div>
+      <div class="vehicle-sim-witnesses" aria-label="Testigos simulados; pulsa para activar o desactivar una alerta">
+        <button type="button" [class.active]="hasFault('oil')" [class.fault]="hasFault('oil')" [attr.aria-pressed]="hasFault('oil')" (click)="toggleFault('oil')"><b>●</b><span>Presión</span></button>
+        <button type="button" [class.active]="hasFault('temperature')" [class.fault]="hasFault('temperature')" [attr.aria-pressed]="hasFault('temperature')" (click)="toggleFault('temperature')"><b>♨</b><span>Temp.</span></button>
+        <button type="button" [class.active]="hasFault('filter')" [class.fault]="hasFault('filter')" [attr.aria-pressed]="hasFault('filter')" (click)="toggleFault('filter')"><b>▼</b><span>Filtro</span></button>
+        <button type="button" [class.active]="hasFault('check')" [class.fault]="hasFault('check')" [attr.aria-pressed]="hasFault('check')" (click)="toggleFault('check')"><b>⚙</b><span>Check</span></button>
+        <button type="button" [class.active]="hasFault('battery')" [class.fault]="hasFault('battery')" [attr.aria-pressed]="hasFault('battery')" (click)="toggleFault('battery')"><b>▰</b><span>Batería</span></button>
+        <button type="button" [class.active]="hasFault('brakes')" [class.fault]="hasFault('brakes')" [attr.aria-pressed]="hasFault('brakes')" (click)="toggleFault('brakes')"><b>⬟</b><span>Frenos</span></button>
+      </div>
+      <div class="vehicle-sim-metrics">
+        <article><span>RPM</span><strong>{{ rpm | number }}</strong><i><b [style.width.%]="rpm / 6000 * 100"></b></i></article>
+        <article><span>Refrigerante (°C)</span><strong [class]="temperatureStatus">{{ coolantTemperature | number:'1.1-1' }}</strong><i><b [class]="temperatureStatus" [style.width.%]="coolantTemperature / 120 * 100"></b></i></article>
+        <article><span>Aceite (bar)</span><strong [class]="oilPressureStatus">{{ oilPressure | number:'1.2-2' }}</strong><i><b [class]="oilPressureStatus" [style.width.%]="oilPressure / 5 * 100"></b></i></article>
+        <article><span>Combustible (%)</span><strong [class]="fuelStatus">{{ fuel | number:'1.1-1' }}<small>%</small></strong><i><b [class]="fuelStatus" [style.width.%]="fuel"></b></i></article>
+      </div>
+      <div class="vehicle-sim-health">
+        <article><div><span>Salud de aceite sintético (SOH)</span><strong [class]="oilHealthStatus">{{ oilHealth | number:'1.0-0' }}%</strong></div><i><b [class]="oilHealthStatus" [style.width.%]="oilHealth"></b></i></article>
+        <article><div><span>Restricción filtro de aire</span><strong [class]="filterStatus">{{ filterRestriction | number:'1.1-1' }}%</strong></div><i><b [class]="filterStatus" [style.width.%]="filterRestriction"></b></i></article>
+      </div>
+      <p class="vehicle-sim-hint">Las lecturas, alertas y efectos de mantenimiento son demostrativos y no representan un diagnóstico mecánico.</p>
+    </section>
+  </div>
+  @if (toastMessage) { <div class="vehicle-sim-toast" role="status" aria-live="polite">{{ toastMessage }}</div> }
+</section>

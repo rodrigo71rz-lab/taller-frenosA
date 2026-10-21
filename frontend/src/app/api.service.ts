@@ -7,6 +7,7 @@ export interface Customer {
   name: string;
   phone: string | null;
   email: string | null;
+  photo_path: string | null;
 }
 
 export interface VehicleType {
@@ -38,7 +39,19 @@ export interface Job {
   work_description: string;
   status: string;
   total: number;
+  paid_total: number;
+  balance: number;
+  vehicle_photo_path: string | null;
   created_at: string;
+}
+
+export interface JobPayment {
+  id: number;
+  job_id: number;
+  amount: number;
+  method: 'efectivo' | 'transaccion';
+  reference: string | null;
+  paid_at: string;
 }
 
 export interface MaintenanceSequence {
@@ -85,12 +98,20 @@ export class ApiService {
     return firstValueFrom(this.http.get<Job[]>(`${this.baseUrl}/jobs`));
   }
 
+  jobPayments(jobId: number): Promise<JobPayment[]> {
+    return firstValueFrom(this.http.get<JobPayment[]>(`${this.baseUrl}/jobs/${jobId}/payments`));
+  }
+
+  addJobPayment(jobId: number, payment: { amount: number; method: JobPayment['method']; reference: string }): Promise<JobPayment> {
+    return firstValueFrom(this.http.post<JobPayment>(`${this.baseUrl}/jobs/${jobId}/payments`, payment));
+  }
+
   maintenance(): Promise<MaintenanceSequence[]> {
     return firstValueFrom(this.http.get<MaintenanceSequence[]>(`${this.baseUrl}/maintenance`));
   }
 
-  create(resource: string, data: object): Promise<unknown> {
-    return firstValueFrom(this.http.post(`${this.baseUrl}/${resource}`, data));
+  create<T = unknown>(resource: string, data: object): Promise<T> {
+    return firstValueFrom(this.http.post<T>(`${this.baseUrl}/${resource}`, data));
   }
 
   update(resource: string, id: number, data: object): Promise<unknown> {
@@ -99,5 +120,21 @@ export class ApiService {
 
   remove(resource: string, id: number): Promise<void> {
     return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${resource}/${id}`));
+  }
+
+  uploadCustomerPhoto(id: number, photo: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('photo', photo);
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/customers/${id}/photo`, formData));
+  }
+
+  uploadVehiclePhoto(id: number, photo: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('photo', photo);
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/jobs/${id}/vehicle-photo`, formData));
+  }
+
+  imageUrl(photoPath: string): string {
+    return `${this.baseUrl.replace(/\/api$/, '')}${photoPath}`;
   }
 }

@@ -1,13 +1,47 @@
 require('dotenv').config();
 
+const { randomUUID } = require('node:crypto');
+const { mkdir, open, unlink } = require('node:fs/promises');
+const path = require('node:path');
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const { pool, initializeDatabase } = require('./db');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
+const uploadsDirectory = path.join(__dirname, '..', 'uploads');
+const imageExtensions = new Map([
+  ['image/jpeg', '.jpg'],
+  ['image/png', '.png'],
+  ['image/webp', '.webp'],
+]);
+const imageUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, callback) => {
+      mkdir(uploadsDirectory, { recursive: true }).then(
+        () => callback(null, uploadsDirectory),
+        callback,
+      );
+    },
+    filename: (_req, file, callback) => {
+      callback(null, `${randomUUID()}${imageExtensions.get(file.mimetype)}`);
+    },
+  }),
+  limits: { fields: 0, files: 1, fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, callback) => {
+    if (!imageExtensions.has(file.mimetype)) {
+      const error = new Error('La imagen debe ser JPG, PNG o WebP.');
+      error.status = 415;
+      callback(error);
+      return;
+    }
+    callback(null, true);
+  },
+});
 
 app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:4200' }));
+app.use('/uploads', express.static(uploadsDirectory, { dotfiles: 'deny', index: false }));
 app.use(express.json({ limit: '100kb' }));
 
 const definitions = {
@@ -18,7 +52,8 @@ const definitions = {
       phone: { kind: 'text', max: 40 },
       email: { kind: 'text', max: 160 },
     },
-    list: 'SELECT id, name, phone, email, created_at FROM customers ORDER BY name',
+    imageColumn: 'photo_path',
+    list: 'SELECT id, name, phone, email, photo_path, created_at FROM customers ORDER BY name',
   },
   vehicleTypes: {
     table: 'vehicle_types',
@@ -60,11 +95,19 @@ const definitions = {
     list: `SELECT j.id, j.customer_id, c.name AS customer_name,
       j.vehicle_type_id, vt.name AS vehicle_type_name,
       j.vehicle_make, j.vehicle_model, j.vehicle_year, j.plate,
-      j.work_description, j.status, j.total, j.created_at
+      j.work_description, j.status, j.total, j.vehicle_photo_path, j.created_at,
+      COALESCE(payment_totals.paid_total, 0) AS paid_total,
+      j.total - COALESCE(payment_totals.paid_total, 0) AS balance
       FROM jobs j
       JOIN customers c ON c.id = j.customer_id
       JOIN vehicle_types vt ON vt.id = j.vehicle_type_id
+      LEFT JOIN (
+        SELECT job_id, SUM(amount) AS paid_total
+        FROM job_payments
+        GROUP BY job_id
+      ) payment_totals ON payment_totals.job_id = j.id
       ORDER BY j.created_at DESC`,
+    imageColumn: 'vehicle_photo_path',
   },
   maintenance: {
     table: 'maintenance_sequences',
@@ -88,7 +131,7 @@ function validate(body, fields) {
   const errors = [];
 
   for (const [name, rule] of Object.entries(fields)) {
-    const raw = body[name];
+    const raw = body?.[name];
     if (raw === undefined || raw === null || raw === '') {
       if (rule.required) errors.push(`${name} es obligatorio.`);
       else values[name] = null;
@@ -163,6 +206,39 @@ function registerResourceRoutes(name, definition) {
     const assignments = fieldNames.map((field, index) => `${field} = $${index + 1}`).join(', ');
     const params = fieldNames.map((field) => values[field]);
     params.push(id);
+    if (name === 'jobs') {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        const { rows: jobRows } = await client.query(
+          'SELECT id FROM jobs WHERE id = $1 FOR UPDATE',
+          [id],
+        );
+        if (!jobRows.length) {
+          await client.query('ROLLBACK');
+          return res.status(404).json({ error: 'No se encontró el registro.' });
+        }
+        const { rows: paymentRows } = await client.query(
+          'SELECT COALESCE(SUM(amount), 0) AS paid_total FROM job_payments WHERE job_id = $1',
+          [id],
+        );
+        if (Number(values.total) < Number(paymentRows[0].paid_total)) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ error: 'El total del trabajo no puede ser menor que los pagos registrados.' });
+        }
+        const { rows } = await client.query(
+          `UPDATE ${definition.table} SET ${assignments} WHERE id = $${params.length} RETURNING *`,
+          params,
+        );
+        await client.query('COMMIT');
+        return res.json(rows[0]);
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
     const { rows } = await pool.query(
       `UPDATE ${definition.table} SET ${assignments} WHERE id = $${params.length} RETURNING *`,
       params,
@@ -174,10 +250,119 @@ function registerResourceRoutes(name, definition) {
   app.delete(`${base}/:id`, asyncRoute(async (req, res) => {
     const id = Number(req.params.id);
     if (!Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'El identificador no es válido.' });
-    const { rowCount } = await pool.query(`DELETE FROM ${definition.table} WHERE id = $1`, [id]);
+    const deleteQuery = definition.imageColumn
+      ? `DELETE FROM ${definition.table} WHERE id = $1 RETURNING ${definition.imageColumn} AS image_path`
+      : `DELETE FROM ${definition.table} WHERE id = $1`;
+    const { rows, rowCount } = await pool.query(deleteQuery, [id]);
     if (!rowCount) return res.status(404).json({ error: 'No se encontró el registro.' });
+    if (rows[0]?.image_path) {
+      try {
+        await removeStoredImage(rows[0].image_path);
+      } catch (error) {
+        console.error('No se pudo eliminar el archivo de imagen asociado.', error);
+      }
+    }
     res.status(204).end();
   }));
+}
+
+async function removeStoredImage(photoPath) {
+  if (!photoPath) return;
+  const filename = path.basename(photoPath);
+  if (photoPath !== `/uploads/${filename}`) {
+    throw new Error('La ruta de imagen almacenada no es válida.');
+  }
+  try {
+    await unlink(path.join(uploadsDirectory, filename));
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+
+async function hasValidImageSignature(file) {
+  const handle = await open(file.path, 'r');
+  try {
+    const header = Buffer.alloc(12);
+    const { bytesRead } = await handle.read(header, 0, header.length, 0);
+    if (file.mimetype === 'image/jpeg') {
+      return bytesRead >= 3 && header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    }
+    if (file.mimetype === 'image/png') {
+      return bytesRead >= 8 && header.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    }
+    return file.mimetype === 'image/webp'
+      && bytesRead >= 12
+      && header.toString('ascii', 0, 4) === 'RIFF'
+      && header.toString('ascii', 8, 12) === 'WEBP';
+  } finally {
+    await handle.close();
+  }
+}
+
+async function saveImage(req, res, table, column) {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) {
+    if (req.file) await removeStoredImage(`/uploads/${req.file.filename}`);
+    return res.status(400).json({ error: 'El identificador no es válido.' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'Selecciona una imagen JPG, PNG o WebP.' });
+  const photoPath = `/uploads/${req.file.filename}`;
+  let validImage;
+  try {
+    validImage = await hasValidImageSignature(req.file);
+  } catch (error) {
+    try {
+      await removeStoredImage(photoPath);
+    } catch (cleanupError) {
+      console.error('No se pudo limpiar una imagen inválida.', cleanupError);
+    }
+    throw error;
+  }
+  if (!validImage) {
+    await removeStoredImage(photoPath);
+    return res.status(415).json({ error: 'El contenido del archivo no coincide con una imagen válida.' });
+  }
+
+  let existingRows;
+  try {
+    ({ rows: existingRows } = await pool.query(
+      `SELECT ${column} FROM ${table} WHERE id = $1`,
+      [id],
+    ));
+  } catch (error) {
+    try {
+      await removeStoredImage(photoPath);
+    } catch (cleanupError) {
+      console.error('No se pudo limpiar la imagen tras fallar la consulta.', cleanupError);
+    }
+    throw error;
+  }
+  if (!existingRows.length) {
+    await removeStoredImage(photoPath);
+    return res.status(404).json({ error: 'No se encontró el registro.' });
+  }
+
+  let rows;
+  try {
+    ({ rows } = await pool.query(
+      `UPDATE ${table} SET ${column} = $1 WHERE id = $2 RETURNING ${column}`,
+      [photoPath, id],
+    ));
+  } catch (error) {
+    try {
+      await removeStoredImage(photoPath);
+    } catch (cleanupError) {
+      console.error('No se pudo limpiar la imagen tras fallar su registro.', cleanupError);
+    }
+    throw error;
+  }
+
+  try {
+    await removeStoredImage(existingRows[0][column]);
+  } catch (error) {
+    console.error('No se pudo eliminar la imagen anterior.', error);
+  }
+  res.json({ [column]: rows[0][column] });
 }
 
 app.get('/api/health', asyncRoute(async (_req, res) => {
@@ -202,12 +387,101 @@ app.get('/api/dashboard', asyncRoute(async (_req, res) => {
   });
 }));
 
+app.get('/api/jobs/:id/payments', asyncRoute(async (req, res) => {
+  const jobId = Number(req.params.id);
+  if (!Number.isInteger(jobId) || jobId < 1) {
+    return res.status(400).json({ error: 'El identificador no es válido.' });
+  }
+  const { rows } = await pool.query(
+    `SELECT id, job_id, amount, method, reference, paid_at
+      FROM job_payments
+      WHERE job_id = $1
+      ORDER BY paid_at DESC, id DESC`,
+    [jobId],
+  );
+  const { rowCount } = await pool.query('SELECT id FROM jobs WHERE id = $1', [jobId]);
+  if (!rowCount) return res.status(404).json({ error: 'No se encontró el trabajo.' });
+  res.json(rows);
+}));
+
+app.post('/api/jobs/:id/payments', asyncRoute(async (req, res) => {
+  const jobId = Number(req.params.id);
+  if (!Number.isInteger(jobId) || jobId < 1) {
+    return res.status(400).json({ error: 'El identificador no es válido.' });
+  }
+  const { values, errors } = validate(req.body, {
+    amount: { kind: 'number', required: true, min: 0 },
+    method: { kind: 'enum', required: true, values: ['efectivo', 'transaccion'] },
+    reference: { kind: 'text', max: 120 },
+  });
+  if (errors.length) return res.status(400).json({ error: errors.join(' ') });
+  const amount = Number(values.amount);
+  if (!Number.isFinite(amount) || amount <= 0 || Math.abs(amount - Number(amount.toFixed(2))) > 1e-8) {
+    return res.status(400).json({ error: 'El importe debe ser mayor que cero y tener como máximo dos decimales.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: jobRows } = await client.query(
+      'SELECT total FROM jobs WHERE id = $1 FOR UPDATE',
+      [jobId],
+    );
+    if (!jobRows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'No se encontró el trabajo.' });
+    }
+    const { rows: paymentRows } = await client.query(
+      'SELECT COALESCE(SUM(amount), 0) AS paid_total FROM job_payments WHERE job_id = $1',
+      [jobId],
+    );
+    const balance = Number(jobRows[0].total) - Number(paymentRows[0].paid_total);
+    if (amount > balance + 1e-8) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ error: 'El pago supera el saldo pendiente del trabajo.' });
+    }
+    const { rows } = await client.query(
+      `INSERT INTO job_payments (job_id, amount, method, reference)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, job_id, amount, method, reference, paid_at`,
+      [jobId, amount, values.method, values.reference],
+    );
+    await client.query('COMMIT');
+    res.status(201).json(rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}));
+
 for (const [name, definition] of Object.entries(definitions)) {
   registerResourceRoutes(name, definition);
 }
 
+app.post('/api/customers/:id/photo', imageUpload.single('photo'), asyncRoute(async (req, res) => {
+  await saveImage(req, res, 'customers', 'photo_path');
+}));
+
+app.post('/api/jobs/:id/vehicle-photo', imageUpload.single('photo'), asyncRoute(async (req, res) => {
+  await saveImage(req, res, 'jobs', 'vehicle_photo_path');
+}));
+
 app.use((error, _req, res, _next) => {
   console.error(error);
+  if (error.type === 'entity.parse.failed') {
+    return res.status(400).json({ error: 'El cuerpo de la solicitud debe ser un JSON válido.' });
+  }
+  if (error instanceof multer.MulterError) {
+    const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    return res.status(status).json({
+      error: error.code === 'LIMIT_FILE_SIZE'
+        ? 'La imagen no puede superar los 5 MB.'
+        : 'No se pudo procesar la imagen enviada.',
+    });
+  }
+  if (error.status === 415) return res.status(415).json({ error: error.message });
   if (error.code === '23505') {
     return res.status(409).json({ error: 'Ya existe un registro con ese código o nombre.' });
   }

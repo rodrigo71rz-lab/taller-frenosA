@@ -12,6 +12,11 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+When you open the project root (`D:\taller`) in VS Code, its automatic task starts
+the backend and frontend and opens the application in your browser. Allow automatic
+tasks when VS Code asks the first time. PostgreSQL must be running; on this machine
+it is configured to start with Windows.
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -35,6 +40,13 @@ ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Customer and vehicle photos
+
+In the Customers section, you can add or replace a customer's photo and photos for
+each vehicle associated with that customer's work orders. Images must be JPG, PNG,
+or WebP and no larger than 5 MB. The backend stores them under `backend/uploads/`;
+back up that directory together with the database to preserve the images.
 
 ## Running unit tests
 

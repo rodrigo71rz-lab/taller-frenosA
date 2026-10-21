@@ -1,0 +1,152 @@
+<section class="simulation-intro">
+  <div>
+    <span class="eyebrow">SIMULACIÓN AERODINÁMICA</span>
+    <h2>Laboratorio de aerodinámica</h2>
+    <p>Visualiza y compara el arrastre estimado de tres vehículos bajo las mismas condiciones de aire.</p>
+  </div>
+  <span class="wind-tunnel-live"><span></span> SIMULACIÓN ACTIVA</span>
+</section>
+
+<div class="wind-tunnel-panel">
+  <section class="panel wind-tunnel-main">
+    <div class="wind-tunnel-heading">
+      <div>
+        <span class="eyebrow">VEHÍCULO DE PRUEBA</span>
+        <h2>{{ selectedWindTunnelVehicle.brand }} {{ selectedWindTunnelVehicle.model }}</h2>
+      </div>
+      <span class="wind-tunnel-speed-readout">{{ windTunnelSpeed }} <small>km/h</small></span>
+    </div>
+
+    <div class="wind-tunnel-vehicle-picker" aria-label="Seleccionar vehículo">
+      @for (vehicle of windTunnelOptions; track vehicle.brand) {
+        <button
+          class="wind-vehicle-option"
+          [class.selected]="windTunnelVehicle === vehicle.brand"
+          [attr.aria-pressed]="windTunnelVehicle === vehicle.brand"
+          type="button"
+          (click)="windTunnelVehicle = vehicle.brand">
+          <img [src]="vehicle.imageUrl" [alt]="vehicle.brand + ' ' + vehicle.model" loading="lazy">
+          <span><strong>{{ vehicle.brand }}</strong><small>{{ vehicle.model }}</small></span>
+        </button>
+      }
+    </div>
+
+    <label class="wind-tunnel-speed-control">
+      <span>VELOCIDAD DEL VIENTO <strong>{{ windTunnelSpeed }} km/h</strong></span>
+      <input type="range" min="20" max="220" step="5" [(ngModel)]="windTunnelSpeed" aria-label="Velocidad del túnel de viento">
+      <span class="wind-speed-scale"><small>20 km/h</small><small>220 km/h</small></span>
+    </label>
+
+    <div class="wind-tunnel-visual" [style.--wind-fill]="windTunnelLevel + '%'">
+      <div class="wind-streams" aria-hidden="true">
+        @for (stream of [1, 2, 3, 4, 5, 6]; track stream) { <span></span> }
+      </div>
+      <div class="wind-visual-caption"><span>MODELO 2D · VISTA LATERAL</span><strong>{{ selectedWindTunnelVehicle.brand }} {{ selectedWindTunnelVehicle.model }}</strong></div>
+      <div class="wind-photo-reference">
+        <img [src]="selectedWindTunnelVehicle.imageUrl" [alt]="'Foto de referencia: ' + selectedWindTunnelVehicle.brand + ' ' + selectedWindTunnelVehicle.model">
+        <span>FOTO DE REFERENCIA</span>
+      </div>
+      <svg class="wind-car-model" viewBox="0 0 900 360" role="img" [attr.aria-label]="'Modelo lateral 2D esquemático de ' + selectedWindTunnelVehicle.brand + ' ' + selectedWindTunnelVehicle.model">
+        <defs>
+          <linearGradient id="carPaint" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5aa2d9"/>
+            <stop offset="1" stop-color="#1d4e7c"/>
+          </linearGradient>
+          <filter id="carShadow" x="-20%" y="-40%" width="140%" height="180%">
+            <feGaussianBlur stdDeviation="8"/>
+          </filter>
+        </defs>
+        <ellipse cx="485" cy="292" rx="300" ry="18" fill="#345675" opacity=".16" filter="url(#carShadow)"/>
+        <path class="model-ground" d="M90 294H830"/>
+        <g class="model-air-arrows" fill="none" stroke="#3888c1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M60 113h132l25 0"/>
+          <path d="m207 103 12 10-12 10"/>
+          <path d="M78 157h100"/>
+          <path d="m168 147 12 10-12 10"/>
+          <path d="M52 201h150"/>
+          <path d="m192 191 12 10-12 10"/>
+          <path d="M640 110h178"/>
+          <path d="m808 100 12 10-12 10"/>
+          <path d="M675 155h142"/>
+          <path d="m807 145 12 10-12 10"/>
+        </g>
+        <g class="model-car">
+          @if (selectedWindTunnelVehicle.brand === 'Renault') {
+            <path class="model-body" d="M157 258 176 215Q187 194 222 187L301 170 367 102Q386 83 415 80L567 82Q600 84 624 111L686 180 752 194Q778 201 789 225L801 259 794 276H738Q728 232 684 232T630 276H364Q355 232 312 232T258 276H176Q156 274 157 258Z"/>
+            <path class="model-glass" d="m319 165 58-59q13-12 38-13l55 2v75Z"/>
+            <path class="model-glass" d="m486 95 78 1q19 1 34 18l47 52H486Z"/>
+          } @else {
+            <path class="model-body" d="M126 258 149 215Q160 195 193 188L299 171 374 112Q395 95 426 93H575Q611 95 638 119L706 178 774 194Q800 201 813 225L823 259 816 276H756Q747 232 702 232T647 276H362Q353 232 309 232T254 276H151Q130 274 126 258Z"/>
+            <path class="model-glass" d="m315 164 68-52q15-12 42-12h55v64Z"/>
+            <path class="model-glass" d="M490 100h82q22 1 42 19l52 45H490Z"/>
+          }
+          <path class="model-detail" d="M157 216h632M256 276h-96m542 0h-80"/>
+          <path class="model-light" d="m767 208 37 10 8 17h-45m-625-20-28 9-8 17h40"/>
+          <path class="model-window-line" d="M480 99v67m8 0v-66"/>
+          <path class="model-wheel-arch" d="M254 276a57 57 0 0 1 108 0m285 0a57 57 0 0 1 109 0"/>
+          <g class="model-wheel">
+            <circle cx="309" cy="276" r="39"/>
+            <circle cx="309" cy="276" r="17"/>
+            <path d="M309 241v18m0 34v18m35-35h-18m-34 0h-18m25-25 13 13m24 24-13-13m0-24 13-13m-24 50-13 13"/>
+            <circle cx="702" cy="276" r="39"/>
+            <circle cx="702" cy="276" r="17"/>
+            <path d="M702 241v18m0 34v18m35-35h-18m-34 0h-18m25-25 13 13m24 24-13-13m0-24 13-13m-24 50-13 13"/>
+          </g>
+          <path class="model-door" d="M480 168v57m8-57v57m-155 0h-67m325 0h-83"/>
+          <circle class="model-handle" cx="456" cy="192" r="3"/>
+          <circle class="model-handle" cx="557" cy="192" r="3"/>
+        </g>
+        <g class="model-force" fill="none" stroke="#c25d4b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M740 126h72"/>
+          <path d="m800 116 12 10-12 10"/>
+        </g>
+        <text x="742" y="111" class="model-force-label">ARRASTRE</text>
+        <text x="94" y="318" class="model-dimension">VISTA LATERAL · ESQUEMA ILUSTRATIVO, NO A ESCALA</text>
+      </svg>
+      <div class="wind-tunnel-result">
+        <small>FUERZA DE ARRASTRE ESTIMADA</small>
+        <strong>{{ windTunnelForce | number:'1.0-0' }} <span>N</span></strong>
+      </div>
+    </div>
+
+    <div class="wind-tunnel-measurements">
+      <article>
+        <span>Coeficiente Cd</span>
+        <strong>{{ selectedWindTunnelVehicle.dragCoefficient | number:'1.2-2' }}</strong>
+      </article>
+      <article>
+        <span>Presión dinámica</span>
+        <strong>{{ windTunnelDynamicPressure | number:'1.0-0' }} <small>Pa</small></strong>
+      </article>
+      <article>
+        <span>Potencia para vencer arrastre</span>
+        <strong>{{ windTunnelPower / 1000 | number:'1.1-1' }} <small>kW</small></strong>
+      </article>
+    </div>
+    <p class="wind-image-credit">Imagen: <a [href]="selectedWindTunnelVehicle.imageSource" target="_blank" rel="noopener noreferrer">{{ selectedWindTunnelVehicle.imageCredit }}</a> · <a [href]="selectedWindTunnelVehicle.imageLicense" target="_blank" rel="noopener noreferrer">ver licencia</a></p>
+  </section>
+
+  <aside class="panel wind-tunnel-summary">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">COMPARATIVA</span>
+        <h2>Arrastre por modelo</h2>
+        <p>Estimado a {{ windTunnelSpeed }} km/h</p>
+      </div>
+    </div>
+    <div class="wind-comparison-chart" role="img" [attr.aria-label]="'Comparación de fuerza de arrastre en newtons a ' + windTunnelSpeed + ' kilómetros por hora'">
+      @for (comparison of windTunnelComparisons; track comparison.vehicle.brand) {
+        <div class="wind-comparison-row" [class.selected]="windTunnelVehicle === comparison.vehicle.brand">
+          <div><span>{{ comparison.vehicle.brand }}</span><strong>{{ comparison.force | number:'1.0-0' }} N</strong></div>
+          <div class="wind-comparison-track"><span [style.width.%]="comparison.force / 1800 * 100"></span></div>
+        </div>
+      }
+    </div>
+    <div class="wind-tech-details">
+      <span>ÁREA FRONTAL <strong>{{ selectedWindTunnelVehicle.frontalArea }} m²</strong></span>
+      <span>MASA DE REFERENCIA <strong>{{ selectedWindTunnelVehicle.mass | number }} kg</strong></span>
+      <span>FUERZA EQUIVALENTE <strong>{{ windTunnelLoad | number:'1.1-1' }} kgf</strong></span>
+    </div>
+    <p class="wind-tunnel-note">El modelo estima resistencia aerodinámica (arrastre) con densidad del aire de 1,225 kg/m³. No estima carga descendente ni sustituye una prueba física; Cd, área y masa son valores de referencia.</p>
+  </aside>
+</div>

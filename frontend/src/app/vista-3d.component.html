@@ -1,0 +1,185 @@
+<section class="viewer-intro">
+  <div>
+    <span class="eyebrow">EXPLORADOR INTERACTIVO</span>
+    <h2>Vista 3D del vehículo</h2>
+    <p>Gira el modelo, selecciona un sistema y explora sus componentes.</p>
+  </div>
+  <div class="viewer-live"><span></span> MODELO INTERACTIVO</div>
+</section>
+
+<div class="viewer-layout">
+  <section class="viewer-main panel">
+    <div class="viewer-toolbar">
+      <div class="view-presets" aria-label="Posición de cámara">
+        <button type="button" [class.active]="cameraYaw === -32 && cameraPitch === 22" (click)="setCamera('isometric')">Isométrica</button>
+        <button type="button" [class.active]="cameraYaw === 0 && cameraPitch === 10" (click)="setCamera('side')">Lateral</button>
+        <button type="button" [class.active]="cameraYaw === -90 && cameraPitch === 10" (click)="setCamera('front')">Frontal</button>
+      </div>
+      <div class="camera-tools">
+        <button type="button" aria-label="Girar a la izquierda" title="Girar a la izquierda" (click)="rotate(-1)">↶</button>
+        <button type="button" aria-label="Girar a la derecha" title="Girar a la derecha" (click)="rotate(1)">↷</button>
+      </div>
+    </div>
+
+    <div class="vehicle-stage">
+      <div class="stage-grid" aria-hidden="true"></div>
+      <div class="stage-label"><span>VISTA 3D</span><span>MODELO ILUSTRATIVO</span></div>
+      <svg class="vehicle-model" viewBox="0 0 800 520" role="img" aria-label="Vista 2D superior interactiva de un automóvil con carrocería, motor, frenos y ruedas seleccionables" [class.xray-view]="chassisVisible" [class.suspension-visible]="selectedPart === 'suspension'">
+        <defs>
+          <linearGradient id="bodyPaint" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#78a9d2"></stop>
+            <stop offset=".48" stop-color="#3978ad"></stop>
+            <stop offset="1" stop-color="#204d7a"></stop>
+          </linearGradient>
+          <linearGradient id="hoodPaint" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#91bbdc"></stop>
+            <stop offset="1" stop-color="#407eaf"></stop>
+          </linearGradient>
+          <linearGradient id="glassPaint" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stop-color="#d7e8f3"></stop>
+            <stop offset="1" stop-color="#7eabc9"></stop>
+          </linearGradient>
+          <linearGradient id="tirePaint" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#495365"></stop>
+            <stop offset=".48" stop-color="#202a38"></stop>
+            <stop offset="1" stop-color="#121b26"></stop>
+          </linearGradient>
+        </defs>
+
+        <g class="vehicle-scene" [attr.transform]="vehicleTransform">
+          <ellipse class="ground-shadow" cx="400" cy="270" rx="148" ry="214"></ellipse>
+          <g class="chassis-details">
+            <path [attr.d]="chassisRailPath(-1)"></path>
+            <path [attr.d]="chassisRailPath(1)"></path>
+            <path class="suspension-link" [attr.d]="axlePath(160)"></path>
+            <path class="suspension-link" [attr.d]="axlePath(365)"></path>
+            <path class="suspension-link" d="M 307 160 L 354 181 M 493 160 L 446 181 M 307 365 L 354 344 M 493 365 L 446 344"></path>
+          </g>
+
+          <g class="vehicle-body" [attr.transform]="exploded ? 'translate(0 -12)' : null" [class.selected-part]="selectedPart === 'body'" (click)="selectPart('body')" role="button" tabindex="0" aria-label="Seleccionar carrocería">
+            <path class="body-shell" d="M 357 448 Q 327 438 320 406 L 294 180 Q 288 136 305 105 L 324 76 Q 341 54 400 54 Q 459 54 476 76 L 495 105 Q 512 136 506 180 L 480 406 Q 473 438 443 448 Q 400 461 357 448 Z"></path>
+            <path class="hood" d="M 313 136 Q 320 99 341 83 Q 400 69 459 83 Q 480 99 487 136 L 480 169 Q 400 158 320 169 Z" [class.selected-surface]="selectedPart === 'engine'" (click)="selectPart('engine'); $event.stopPropagation()"></path>
+            <path class="hood-detail" d="M 400 88 L 400 148 M 360 91 Q 350 111 350 135 M 440 91 Q 450 111 450 135"></path>
+            <path class="windshield" d="M 321 174 Q 328 162 344 165 L 456 165 Q 472 162 479 174 L 468 205 Q 400 195 332 205 Z"></path>
+            <path class="roof-glass" d="M 332 211 Q 400 201 468 211 L 460 316 Q 400 327 340 316 Z"></path>
+            <path class="roof-line" d="M 400 207 L 400 321 M 339 263 L 461 263"></path>
+            <path class="rear-glass" d="M 340 323 Q 400 333 460 323 L 474 371 Q 467 383 453 382 L 347 382 Q 333 383 326 371 Z"></path>
+            <path class="trunk" d="M 326 389 Q 400 402 474 389 L 468 417 Q 400 441 332 417 Z"></path>
+            <path class="body-detail" d="M 313 204 L 326 211 M 487 204 L 474 211 M 319 337 L 341 333 M 481 337 L 459 333 M 328 290 L 340 290 M 472 290 L 460 290"></path>
+            <path class="front-light" d="M 326 76 Q 343 66 365 65 L 360 76 Q 342 79 330 87 Z M 474 76 Q 457 66 435 65 L 440 76 Q 458 79 470 87 Z"></path>
+            <path class="rear-light" d="M 332 427 L 365 438 L 359 446 Q 340 443 329 435 Z M 468 427 L 435 438 L 441 446 Q 460 443 471 435 Z"></path>
+            <g class="engine-detail" role="button" tabindex="0" aria-label="Seleccionar motor" (click)="selectPart('engine'); $event.stopPropagation()">
+              <rect x="366" y="101" width="68" height="39" rx="8"></rect>
+              <path d="M 377 111 L 423 111 M 377 119 L 423 119 M 377 127 L 423 127 M 387 103 L 387 138 M 413 103 L 413 138"></path>
+            </g>
+          </g>
+
+          @for (wheel of wheels; track wheel.id) {
+            <g class="wheel-assembly" [class.wheel-selected]="selectedPart === wheel.part || selectedPart === 'wheels'" [class.wheel-spinning]="wheelsSpinning" [attr.transform]="wheelOffset(wheel)" (click)="selectPart(wheel.part); $event.stopPropagation()" role="button" tabindex="0" [attr.aria-label]="wheel.front ? 'Seleccionar freno delantero' : 'Seleccionar freno trasero'">
+              <rect class="tire" x="-17" y="-39" width="34" height="78" rx="12"></rect>
+              <path class="tread" d="M -12 -29 L 12 -29 M -14 -17 L 14 -17 M -15 -5 L 15 -5 M -15 7 L 15 7 M -14 19 L 14 19 M -12 31 L 12 31"></path>
+              <rect class="rim" x="-10" y="-27" width="20" height="54" rx="8"></rect>
+              <ellipse class="brake-disc" cx="0" cy="0" rx="9" ry="15"></ellipse>
+              <path class="spokes" d="M 0 -13 L 0 13 M -6 -8 L 6 8 M 6 -8 L -6 8"></path>
+              <circle class="hub" cx="0" cy="0" r="4"></circle>
+            </g>
+          }
+        </g>
+      </svg>
+      <div class="stage-axis" aria-hidden="true"><span>X</span><span>Y</span><span>Z</span></div>
+    </div>
+
+    <div class="viewer-controls">
+      <label class="range-control">
+        <span>Rotación <strong>{{ cameraYaw }}°</strong></span>
+        <input aria-label="Rotación de la vista" type="range" min="-180" max="180" step="1" [(ngModel)]="cameraYaw">
+      </label>
+      <label class="range-control">
+        <span>Inclinación <strong>{{ cameraPitch }}°</strong></span>
+        <input aria-label="Inclinación de la vista" type="range" min="0" max="60" step="1" [(ngModel)]="cameraPitch">
+      </label>
+      <label class="range-control">
+        <span>Acercamiento <strong>{{ zoom | number:'1.0-1' }}×</strong></span>
+        <input aria-label="Acercamiento del modelo" type="range" min="0.7" max="1.3" step="0.05" [(ngModel)]="zoom">
+      </label>
+    </div>
+  </section>
+
+  <aside class="viewer-sidebar">
+    <section class="panel vehicle-card">
+      <div class="panel-title">
+        <div><span class="eyebrow">VEHÍCULO</span><h2>Datos del modelo</h2></div>
+        <span class="vehicle-icon">▰</span>
+      </div>
+      @if (jobs.length) {
+        <label class="vehicle-select">Orden de trabajo
+          <select aria-label="Seleccionar vehículo" [(ngModel)]="selectedJobId">
+            <option [ngValue]="0">Modelo de referencia</option>
+            @for (job of jobs; track job.id) {
+              <option [ngValue]="job.id">#{{ job.id }} · {{ job.vehicle_make }} {{ job.vehicle_model }}</option>
+            }
+          </select>
+        </label>
+      }
+      @if (selectedJob; as job) {
+        <div class="vehicle-data">
+          <span>{{ job.vehicle_type_name }}</span>
+          <h3>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}</h3>
+          <p>Placa <strong>{{ job.plate }}</strong></p>
+          <span class="status-badge">{{ job.status.replace('_', ' ') }}</span>
+        </div>
+      } @else {
+        <div class="vehicle-data">
+          <span>Modelo de referencia</span>
+          <h3>Automóvil compacto</h3>
+          <p>Carrocería · cuatro ruedas · dos ejes</p>
+          <span class="status-badge reference">VISUALIZACIÓN 3D</span>
+        </div>
+      }
+    </section>
+
+    <section class="panel parts-panel">
+      <div class="panel-title"><div><span class="eyebrow">EXPLORAR</span><h2>Sistemas del vehículo</h2></div></div>
+      <div class="part-list">
+        @for (part of partDetails; track part.id) {
+          <button type="button" class="part-button" [class.active]="selectedPart === part.id" (click)="selectPart(part.id)">
+            <span class="part-indicator"></span>
+            <span>{{ part.name }}</span>
+            <span class="part-arrow">›</span>
+          </button>
+        }
+      </div>
+      <article class="part-detail" aria-live="polite">
+        <span>{{ selectedPartDetails.label }}</span>
+        <h3>{{ selectedPartDetails.name }}</h3>
+        <p>{{ selectedPartDetails.description }}</p>
+        <small>{{ selectedPartDetails.specification }}</small>
+      </article>
+    </section>
+
+    <section class="panel tools-panel">
+      <div class="panel-title"><div><span class="eyebrow">HERRAMIENTAS</span><h2>Visualización</h2></div></div>
+      <button type="button" class="tool-toggle" [class.enabled]="chassisVisible" [attr.aria-pressed]="chassisVisible" (click)="chassisVisible = !chassisVisible">
+        <span class="tool-icon">◌</span>
+        <span><strong>Ver chasis</strong><small>{{ chassisVisible ? 'Estructura interna visible' : 'Mostrar estructura interna' }}</small></span>
+        <span class="toggle-indicator"></span>
+      </button>
+      <button type="button" class="tool-toggle" [class.enabled]="exploded" [attr.aria-pressed]="exploded" (click)="exploded = !exploded">
+        <span class="tool-icon">✣</span>
+        <span><strong>Vista explotada</strong><small>{{ exploded ? 'Componentes separados' : 'Separar los componentes' }}</small></span>
+        <span class="toggle-indicator"></span>
+      </button>
+      <button type="button" class="tool-toggle" [class.enabled]="wheelsSpinning" [attr.aria-pressed]="wheelsSpinning" (click)="wheelsSpinning = !wheelsSpinning">
+        <span class="tool-icon">◉</span>
+        <span><strong>Animar ruedas</strong><small>{{ wheelsSpinning ? 'Animación activa' : 'Activar animación' }}</small></span>
+        <span class="toggle-indicator"></span>
+      </button>
+      <label class="range-control steering-control">
+        <span>Dirección <strong>{{ steeringAngle }}°</strong></span>
+        <input aria-label="Giro de las ruedas delanteras" type="range" min="-30" max="30" step="1" [ngModel]="steeringAngle" (ngModelChange)="setSteering($event)">
+      </label>
+    </section>
+  </aside>
+</div>
+
+<p class="viewer-disclaimer">Vista interactiva ilustrativa. La geometría es esquemática y no representa una medición ni un diagnóstico mecánico.</p>

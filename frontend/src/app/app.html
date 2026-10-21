@@ -52,29 +52,205 @@
       </section>
     }
 
+    @if (!loading && section === 'control-systems') {
+        <section class="simulation-intro">
+          <div>
+            <span class="eyebrow">SIMULACIÓN INTERACTIVA</span>
+            <h2>Panel de control del vehículo</h2>
+            <p>Enciende el motor, acelera y modifica las lecturas para simular distintos estados del vehículo.</p>
+          </div>
+          <span class="simulation-overview" [class]=" 'simulation-overview ' + simulationOverviewStatus">
+            <span class="simulation-status-dot"></span>{{ statusLabel(simulationOverviewStatus) }}
+          </span>
+        </section>
+        <div class="simulation-workspace">
+          <div class="simulation-main-column">
+            <section class="simulation-engine panel">
+              <div class="simulation-engine-main">
+                <div class="simulation-rpm-dial" [style.--rpm-fill]="(engineRpm / 7000 * 100) + '%'">
+                  <div class="simulation-rpm-center">
+                    <strong>{{ engineRpm | number }}</strong>
+                    <span>RPM</span>
+                  </div>
+                </div>
+                <div class="simulation-engine-info">
+                  <span class="eyebrow">MOTOR</span>
+                  <h3>{{ engineRunning ? 'Motor encendido' : 'Motor apagado' }}</h3>
+                  <p>Ralentí simulado: 800 RPM · Límite del indicador: 7.000 RPM</p>
+                  <span class="sim-status" [class]=" 'sim-status ' + engineRpmStatus">{{ statusLabel(engineRpmStatus) }}</span>
+                </div>
+              </div>
+              <div class="simulation-engine-controls">
+                <label class="simulation-control">
+                  <span>Acelerador <strong>{{ simulationValues.throttle }}%</strong></span>
+                  <input class="simulation-range" aria-label="Apertura de mariposa" type="range" min="0" max="100" step="1" [ngModel]="simulationValues.throttle" (ngModelChange)="setSimulationValue('throttle', $event)">
+                </label>
+                <button class="primary-button simulation-engine-button" [class.engine-running]="engineRunning" type="button" (click)="toggleEngine()">
+                  {{ engineRunning ? '■ Apagar motor' : '▶ Encender motor' }}
+                </button>
+              </div>
+            </section>
+            <section class="simulation-grid">
+              @for (sensor of simulationSensors; track sensor.key) {
+                <article class="simulation-card">
+                  <div class="simulation-card-heading">
+                    <h3>{{ sensor.label }}</h3>
+                    @if (sensor.key !== 'throttle') {
+                      <span class="sim-status" [class]=" 'sim-status ' + simulationStatus(sensor.key)">{{ statusLabel(simulationStatus(sensor.key)) }}</span>
+                    } @else {
+                      <span class="sim-status normal">Control</span>
+                    }
+                  </div>
+                  <p class="simulation-reading">{{ simulationValues[sensor.key] | number:'1.0-1' }}<span>{{ sensor.unit }}</span></p>
+                  <div class="simulation-meter" aria-hidden="true"><span [style.width.%]="simulationPercent(sensor)" [class]=" 'meter-fill ' + (sensor.key === 'throttle' ? 'normal' : simulationStatus(sensor.key))"></span></div>
+                  @if (sensor.key !== 'throttle') {
+                    <label class="simulation-control">
+                      <span>Ajustar lectura</span>
+                      <input class="simulation-range" [attr.aria-label]="'Ajustar ' + sensor.label" type="range" [min]="sensor.min" [max]="sensor.max" [step]="sensor.step" [ngModel]="simulationValues[sensor.key]" (ngModelChange)="setSimulationValue(sensor.key, $event)">
+                    </label>
+                  } @else {
+                    <small class="simulation-hint">Usa el control de aceleración del motor.</small>
+                  }
+                </article>
+              }
+            </section>
+          </div>
+          <aside class="simulation-calculations" aria-label="Cálculos del simulador">
+            <section class="simulation-alerts" aria-live="polite">
+              <div class="simulation-alerts-heading">
+                <span class="eyebrow">DIAGNÓSTICO SIMULADO</span>
+                <h2>Alertas de fallas <span>{{ simulationAlerts.length }}</span></h2>
+              </div>
+              @if (simulationAlerts.length) {
+                <div class="simulation-alert-list">
+                  @for (alert of simulationAlerts; track alert.key) {
+                    <article class="simulation-alert" [class]=" 'simulation-alert ' + alert.severity">
+                      <strong>{{ alert.title }}</strong>
+                      <p>{{ alert.message }}</p>
+                    </article>
+                  }
+                </div>
+              } @else {
+                <p class="simulation-no-alerts">Sin fallas simuladas. Todos los sistemas están dentro de los rangos de referencia.</p>
+              }
+            </section>
+            <div class="simulation-calculations-heading">
+              <span class="eyebrow">LECTURAS EN VIVO</span>
+              <h2>Cálculos matemáticos</h2>
+              <p>Resultados derivados de los controles del simulador.</p>
+            </div>
+            <div class="simulation-calculation-list">
+              @for (calculation of simulationCalculations; track calculation.name) {
+                <article class="simulation-calculation">
+                  <h3>{{ calculation.name }}</h3>
+                  <code>{{ calculation.formula }}</code>
+                  <p><strong>{{ calculation.result | number:'1.0-2' }}</strong><span>{{ calculation.unit }}</span></p>
+                </article>
+              }
+            </div>
+            <p class="simulation-calculation-note">Referencias ilustrativas: depósito de 500 mL, batería nominal de 12.6 V, presión atmosférica de 101.3 kPa y apertura angular máxima asumida de 90°.</p>
+            <div class="simulation-physical-heading">
+              <span class="eyebrow">MAGNITUDES Y CONVERSIONES</span>
+              <h2>Cálculos físicos</h2>
+              <p>Magnitudes derivadas en tiempo real de las lecturas simuladas.</p>
+            </div>
+            <div class="simulation-calculation-list">
+              @for (calculation of simulationPhysicalCalculations; track calculation.name) {
+                <article class="simulation-calculation">
+                  <h3>{{ calculation.name }}</h3>
+                  <code>{{ calculation.formula }}</code>
+                  <p><strong>{{ calculation.result | number:'1.0-2' }}</strong><span>{{ calculation.unit }}</span></p>
+                </article>
+              }
+            </div>
+            <p class="simulation-calculation-note">Conversiones físicas basadas en las lecturas disponibles. La simulación no mide velocidad real, corriente eléctrica ni caudal.</p>
+          </aside>
+        </div>
+        <p class="simulation-disclaimer">Simulación educativa: los valores son ilustrativos, no son mediciones reales ni sustituyen el diagnóstico de un técnico.</p>
+    }
+
+    @if (!loading && section === 'vehicle-simulator') { <app-vehicle-simulator></app-vehicle-simulator> }
+    @if (!loading && section === 'wind-tunnel') { <app-wind-tunnel></app-wind-tunnel> }
+
     @if (!loading && section === 'customers') {
       <section class="panel form-panel">
         <div class="panel-heading"><div><h2>Registrar cliente</h2><p>Los campos marcados con * son obligatorios.</p></div></div>
-        <form class="form-grid" (ngSubmit)="save('customers', customerForm, () => customerForm = { name: '', phone: '', email: '' })">
+        <form class="form-grid" (ngSubmit)="saveCustomer()">
           <label>Nombre completo *<input name="customerName" [(ngModel)]="customerForm.name" required maxlength="120" placeholder="Ej. María López"></label>
           <label>Teléfono<input name="customerPhone" [(ngModel)]="customerForm.phone" maxlength="40" placeholder="Ej. 555 123 4567"></label>
           <label>Correo electrónico<input name="customerEmail" [(ngModel)]="customerForm.email" type="email" maxlength="160" placeholder="cliente@correo.com"></label>
+          <label>Foto del cliente<input name="customerPhoto" type="file" accept="image/jpeg,image/png,image/webp" (change)="setCustomerPhoto($event)"><small class="subline">{{ customerPhoto?.name || 'Opcional · JPG, PNG o WebP · máximo 5 MB' }}</small></label>
           <div class="form-action"><button class="primary-button" type="submit">＋ Guardar cliente</button></div>
         </form>
       </section>
       <section class="panel"><div class="panel-heading"><div><h2>Clientes</h2><p>{{ customers.length }} registros</p></div></div>
         @if (!customers.length) { <div class="empty-state">Aún no hay clientes registrados.</div> }
-        @else { <div class="table-wrap"><table><thead><tr><th>NOMBRE</th><th>TELÉFONO</th><th>CORREO</th><th></th></tr></thead><tbody>
-          @for (customer of customers; track customer.id) { <tr><td class="strong">{{ customer.name }}</td><td>{{ customer.phone || '—' }}</td><td>{{ customer.email || '—' }}</td><td class="actions"><button class="delete-button" (click)="remove('customers', customer.id)">Eliminar</button></td></tr> }
-        </tbody></table></div> }
+        @else {
+          <div class="customer-list">
+            @for (customer of customers; track customer.id) {
+              <article class="customer-card">
+                <div class="customer-profile">
+                  @if (customer.photo_path) { <img class="customer-photo" [src]="imageUrl(customer.photo_path)" [alt]="'Foto de ' + customer.name"> }
+                  @else { <div class="customer-photo-placeholder" aria-hidden="true">♙</div> }
+                  <div class="customer-info">
+                    <h3>{{ customer.name }}</h3>
+                    <p>{{ customer.phone || 'Sin teléfono' }} · {{ customer.email || 'Sin correo' }}</p>
+                  </div>
+                  <label class="image-upload">{{ customer.photo_path ? 'Cambiar foto' : 'Foto del cliente' }}<input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadCustomerPhoto(customer, $event)"></label>
+                  <button class="delete-button" type="button" (click)="remove('customers', customer.id)">Eliminar</button>
+                </div>
+                <div class="customer-vehicles">
+                  <h4>Vehículos registrados</h4>
+                  @for (job of jobsForCustomer(customer.id); track job.id) {
+                    <div class="vehicle-photo-row">
+                      @if (job.vehicle_photo_path) { <img class="vehicle-photo" [src]="imageUrl(job.vehicle_photo_path)" [alt]="'Foto de ' + job.vehicle_make + ' ' + job.vehicle_model"> }
+                      @else { <div class="vehicle-photo-placeholder" aria-hidden="true">▰</div> }
+                      <div class="vehicle-photo-info">
+                        <strong>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}</strong>
+                        <small>{{ job.plate }} · Orden #{{ job.id }}</small>
+                      </div>
+                      <label class="image-upload">{{ job.vehicle_photo_path ? 'Cambiar foto' : 'Agregar foto del vehículo' }}<input type="file" accept="image/jpeg,image/png,image/webp" (change)="uploadVehiclePhoto(job, $event)"></label>
+                    </div>
+                  } @empty {
+                    <p class="customer-no-vehicles">Registra un trabajo para este cliente y podrás agregar la foto de su vehículo.</p>
+                  }
+                </div>
+              </article>
+            }
+          </div>
+        }
       </section>
     }
 
     @if (!loading && section === 'vehicles') {
-      <section class="panel form-panel"><div class="panel-heading"><div><h2>Registrar tipo de carro</h2><p>Ejemplos: automóvil, SUV, pickup o motocicleta.</p></div></div>
-        <form class="form-grid" (ngSubmit)="save('vehicleTypes', vehicleForm, () => vehicleForm = { name: '', description: '' })">
-          <label>Tipo de carro *<input name="vehicleName" [(ngModel)]="vehicleForm.name" required maxlength="80" placeholder="Ej. SUV"></label>
-          <label>Descripción<input name="vehicleDescription" [(ngModel)]="vehicleForm.description" maxlength="240" placeholder="Características adicionales"></label>
+      <section class="panel form-panel"><div class="panel-heading"><div><h2>Registrar tipo de carro</h2><p>Selecciona una carrocería de la imagen o agrega un tipo personalizado.</p></div></div>
+        <form class="form-grid" (ngSubmit)="saveVehicleType()">
+          <div class="vehicle-type-picker">
+            <label class="vehicle-type-search-label" for="vehicleTypeSearch">Tipo de carro *</label>
+            <input id="vehicleTypeSearch" class="vehicle-type-search" name="vehicleTypeSearch" [(ngModel)]="vehicleTypeSearch" type="search" placeholder="Buscar tipo de vehículo...">
+            <div class="vehicle-type-grid" role="group" aria-label="Selecciona un tipo de carro">
+              @for (option of filteredVehicleTypeOptions; track option.name) {
+                <label class="vehicle-option" [class.selected]="vehicleTypeSelection === option.name">
+                  <input class="vehicle-option-input" type="radio" name="vehicleTypeOption" [value]="option.name" [(ngModel)]="vehicleTypeSelection" (ngModelChange)="onVehicleTypeChange($event)">
+                  <span class="vehicle-type-icon" aria-hidden="true">{{ option.icon }}</span>
+                  <span class="vehicle-type-name">{{ option.name }}</span>
+                  @if (vehicleTypeSelection === option.name) { <span class="vehicle-type-check" aria-hidden="true">✓</span> }
+                </label>
+              }
+              <label class="vehicle-option" [class.selected]="vehicleTypeSelection === customVehicleOption">
+                <input class="vehicle-option-input" type="radio" name="vehicleTypeOption" [value]="customVehicleOption" [(ngModel)]="vehicleTypeSelection" (ngModelChange)="onVehicleTypeChange($event)">
+                <span class="vehicle-type-icon" aria-hidden="true">＋</span>
+                <span class="vehicle-type-name">Otro tipo</span>
+                @if (vehicleTypeSelection === customVehicleOption) { <span class="vehicle-type-check" aria-hidden="true">✓</span> }
+              </label>
+            </div>
+            @if (vehicleTypeSelection === customVehicleOption) {
+              <label class="custom-vehicle-name">Nombre del tipo personalizado *
+                <input name="customVehicleName" [(ngModel)]="vehicleForm.name" required maxlength="80" placeholder="Ej. Motocicleta">
+              </label>
+            }
+          </div>
+          <label class="wide-field">Descripción<input name="vehicleDescription" [(ngModel)]="vehicleForm.description" maxlength="240" placeholder="Características adicionales"></label>
           <div class="form-action"><button class="primary-button" type="submit">＋ Guardar tipo</button></div>
         </form>
       </section>
@@ -112,7 +288,30 @@
         <form class="form-grid" (ngSubmit)="saveJob()">
           <label>Cliente *<select name="jobCustomer" [(ngModel)]="jobForm.customer_id" required><option [ngValue]="0" disabled>Selecciona un cliente</option>@for (customer of customers; track customer.id) { <option [ngValue]="customer.id">{{ customer.name }}</option> }</select></label>
           <label>Tipo de carro *<select name="jobVehicleType" [(ngModel)]="jobForm.vehicle_type_id" required><option [ngValue]="0" disabled>Selecciona el tipo</option>@for (vehicle of vehicleTypes; track vehicle.id) { <option [ngValue]="vehicle.id">{{ vehicle.name }}</option> }</select></label>
-          <label>Marca *<input name="jobMake" [(ngModel)]="jobForm.vehicle_make" required maxlength="80" placeholder="Ej. Toyota"></label>
+          <div class="job-brand-picker">
+            <label class="job-brand-search-label" for="jobBrandSearch">Marca *</label>
+            <input id="jobBrandSearch" class="job-brand-search" name="jobBrandSearch" [(ngModel)]="jobBrandSearch" type="search" placeholder="Buscar y seleccionar una marca...">
+            <div class="job-brand-grid" role="group" aria-label="Selecciona una marca de vehículo">
+              @for (brand of filteredJobBrandOptions; track brand.slug) {
+                <button class="job-brand-option" [class.selected]="jobBrandSelection === brand.name" type="button" [attr.aria-pressed]="jobBrandSelection === brand.name" (click)="selectJobBrand(brand.name)">
+                  <img class="job-brand-logo" [src]="'https://cdn.simpleicons.org/' + brand.slug" alt="" loading="lazy" (error)="hideBrandLogo($event)">
+                  <span class="job-brand-name">{{ brand.name }}</span>
+                  @if (jobBrandSelection === brand.name) { <span class="job-brand-check" aria-hidden="true">✓</span> }
+                </button>
+              }
+              <button class="job-brand-option" [class.selected]="jobBrandSelection === customJobBrand" type="button" [attr.aria-pressed]="jobBrandSelection === customJobBrand" (click)="selectJobBrand(customJobBrand)">
+                <span class="job-brand-add" aria-hidden="true">＋</span>
+                <span class="job-brand-name">Otra marca</span>
+                @if (jobBrandSelection === customJobBrand) { <span class="job-brand-check" aria-hidden="true">✓</span> }
+              </button>
+            </div>
+            @if (jobBrandSelection === customJobBrand) {
+              <label class="job-custom-brand">Otra marca (sin logo disponible) *
+                <input name="jobCustomBrand" [(ngModel)]="jobForm.vehicle_make" required maxlength="80" placeholder="Escribe la marca">
+              </label>
+            }
+            <p class="job-brand-credit">Logotipos servidos por <a href="https://simpleicons.org/" target="_blank" rel="noreferrer">Simple Icons CDN</a>. Las marcas y sus logotipos pertenecen a sus titulares; revisa las licencias y lineamientos aplicables.</p>
+          </div>
           <label>Modelo *<input name="jobModel" [(ngModel)]="jobForm.vehicle_model" required maxlength="80" placeholder="Ej. Corolla"></label>
           <label>Año *<input name="jobYear" [(ngModel)]="jobForm.vehicle_year" type="number" min="1886" max="2200" required></label>
           <label>Placa *<input name="jobPlate" [(ngModel)]="jobForm.plate" required maxlength="20" placeholder="Ej. ABC-123"></label>
@@ -124,8 +323,57 @@
       </section>
       <section class="panel"><div class="panel-heading"><div><h2>Trabajos del taller</h2><p>{{ jobs.length }} órdenes</p></div></div>
         @if (!jobs.length) { <div class="empty-state">Aún no hay trabajos registrados.</div> }
-        @else { <div class="table-wrap"><table><thead><tr><th>CLIENTE</th><th>VEHÍCULO</th><th>SERVICIO</th><th>ESTADO</th><th>TOTAL</th><th></th></tr></thead><tbody>
-          @for (job of jobs; track job.id) { <tr><td class="strong">{{ job.customer_name }}</td><td>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}<small class="subline">{{ job.plate }} · {{ job.vehicle_type_name }}</small></td><td>{{ job.work_description }}</td><td><select class="status-select" [value]="job.status" (change)="updateJobStatus(job, $event)"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="terminado">Terminado</option><option value="entregado">Entregado</option></select></td><td>{{ job.total | number:'1.2-2' }}</td><td class="actions"><button class="delete-button" (click)="remove('jobs', job.id)">Eliminar</button></td></tr> }
+        @else { <div class="table-wrap"><table><thead><tr><th>CLIENTE</th><th>VEHÍCULO</th><th>SERVICIO</th><th>ESTADO</th><th>TOTAL</th><th>PAGADO</th><th>SALDO</th><th></th></tr></thead><tbody>
+          @for (job of jobs; track job.id) {
+            <tr>
+              <td class="strong">{{ job.customer_name }}</td>
+              <td>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}<small class="subline">{{ job.plate }} · {{ job.vehicle_type_name }}</small></td>
+              <td>{{ job.work_description }}</td>
+              <td><select class="status-select" [value]="job.status" (change)="updateJobStatus(job, $event)"><option value="pendiente">Pendiente</option><option value="en_proceso">En proceso</option><option value="terminado">Terminado</option><option value="entregado">Entregado</option></select></td>
+              <td>{{ job.total | number:'1.2-2' }}</td>
+              <td>{{ job.paid_total | number:'1.2-2' }}</td>
+              <td>{{ paymentBalance(job) | number:'1.2-2' }}</td>
+              <td class="actions"><button class="print-button" type="button" (click)="printJob(job)">Imprimir</button><button class="payment-button" type="button" (click)="toggleJobPayments(job)">Pagos</button><button class="delete-button" type="button" (click)="remove('jobs', job.id)">Eliminar</button></td>
+            </tr>
+            @if (selectedPaymentJobId === job.id) {
+              <tr class="payment-detail-row">
+                <td colspan="8">
+                  <section class="job-payment-panel">
+                    <div class="payment-summary">
+                      <span>Total: <strong>{{ job.total | number:'1.2-2' }}</strong></span>
+                      <span>Pagado: <strong>{{ job.paid_total | number:'1.2-2' }}</strong></span>
+                      <span>Saldo pendiente: <strong>{{ paymentBalance(job) | number:'1.2-2' }}</strong></span>
+                    </div>
+                    @if (paymentBalance(job) > 0) {
+                      <form class="payment-form" (ngSubmit)="addJobPayment(job)">
+                        <label>Importe<input name="paymentAmount" [(ngModel)]="paymentForm.amount" type="number" min="0.01" [max]="paymentBalance(job)" step="0.01" required></label>
+                        <label>Método<select name="paymentMethod" [(ngModel)]="paymentForm.method"><option value="efectivo">Efectivo</option><option value="transaccion">Transacción</option></select></label>
+                        <label>Referencia de transacción (opcional)<input name="paymentReference" [(ngModel)]="paymentForm.reference" maxlength="120" placeholder="N.º de operación"></label>
+                        <button class="primary-button" type="submit" [disabled]="paymentForm.amount <= 0 || paymentForm.amount > paymentBalance(job)">＋ Registrar pago</button>
+                      </form>
+                    } @else {
+                      <p class="payment-complete">El trabajo está pagado por completo.</p>
+                    }
+                    <h3>Pagos registrados</h3>
+                    @if (!jobPayments.length) {
+                      <p class="payment-empty">Todavía no hay pagos para este trabajo.</p>
+                    } @else {
+                      <div class="table-wrap">
+                        <table class="payments-table">
+                          <thead><tr><th>FECHA</th><th>MÉTODO</th><th>REFERENCIA</th><th>IMPORTE</th></tr></thead>
+                          <tbody>
+                            @for (payment of jobPayments; track payment.id) {
+                              <tr><td>{{ formatJobDate(payment.paid_at) }}</td><td>{{ payment.method === 'efectivo' ? 'Efectivo' : 'Transacción' }}</td><td>{{ payment.reference || '—' }}</td><td>{{ payment.amount | number:'1.2-2' }}</td></tr>
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    }
+                  </section>
+                </td>
+              </tr>
+            }
+          }
         </tbody></table></div> }
       </section>
     }
@@ -152,3 +400,55 @@
     <footer class="footer">BuenFreno · Sistema inicial de control de taller · Guarda tus respaldos regularmente.</footer>
   </main>
 </div>
+
+@if (printJobDetails; as job) {
+  <article class="print-sheet">
+    <header class="print-header">
+      <div><span class="print-eyebrow">CONTROL DE TALLER</span><h1>BuenFreno</h1></div>
+      <div class="print-order"><span>ORDEN DE TRABAJO</span><strong>#{{ job.id }}</strong></div>
+    </header>
+    <p class="print-date">Registrado: {{ formatJobDate(job.created_at) }}</p>
+    <section class="print-section">
+      <h2>Datos del cliente</h2>
+      <dl>
+        <div><dt>Nombre</dt><dd>{{ job.customer_name }}</dd></div>
+        <div><dt>Teléfono</dt><dd>{{ printCustomer?.phone || 'No registrado' }}</dd></div>
+        <div><dt>Correo electrónico</dt><dd>{{ printCustomer?.email || 'No registrado' }}</dd></div>
+      </dl>
+    </section>
+    <section class="print-section">
+      <h2>Datos del vehículo</h2>
+      <div class="print-vehicle-brand">
+        <span class="print-brand-logo-wrap">
+          @if (vehicleBrandLogoUrl(job.vehicle_make)) {
+            <img class="print-brand-logo" [src]="vehicleBrandLogoUrl(job.vehicle_make)" [alt]="'Logo de ' + job.vehicle_make" (error)="showPrintBrandFallback($event)">
+          }
+          <span class="print-brand-fallback" [hidden]="!!vehicleBrandLogoUrl(job.vehicle_make)">{{ vehicleBrandInitial(job.vehicle_make) }}</span>
+        </span>
+        <span class="print-brand-name"><small>MARCA Y MODELO</small><strong>{{ job.vehicle_year }} {{ job.vehicle_make }} {{ job.vehicle_model }}</strong></span>
+      </div>
+      <dl>
+        <div><dt>Tipo de vehículo</dt><dd>{{ job.vehicle_type_name }}</dd></div>
+        <div><dt>Marca</dt><dd>{{ job.vehicle_make }}</dd></div>
+        <div><dt>Modelo</dt><dd>{{ job.vehicle_model }}</dd></div>
+        <div><dt>Año</dt><dd>{{ job.vehicle_year }}</dd></div>
+        <div><dt>Placa</dt><dd>{{ job.plate }}</dd></div>
+      </dl>
+    </section>
+    <section class="print-section">
+      <h2>Trabajo realizado</h2>
+      <p class="print-description">{{ job.work_description }}</p>
+      <dl>
+        <div><dt>Estado</dt><dd>{{ job.status.replace('_', ' ') }}</dd></div>
+        <div><dt>Total</dt><dd>{{ job.total | number:'1.2-2' }}</dd></div>
+        <div><dt>Pagado</dt><dd>{{ job.paid_total | number:'1.2-2' }}</dd></div>
+        <div><dt>Saldo pendiente</dt><dd>{{ job.balance | number:'1.2-2' }}</dd></div>
+      </dl>
+    </section>
+    <div class="print-signatures">
+      <div>Firma del cliente</div>
+      <div>Firma del responsable</div>
+    </div>
+    <button class="print-close" type="button" (click)="closePrintSheet()">Cerrar</button>
+  </article>
+}
