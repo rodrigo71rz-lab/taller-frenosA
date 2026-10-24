@@ -1,0 +1,105 @@
+<section class="service-prices-hero">
+  <div>
+    <span class="service-prices-eyebrow">CATÁLOGO DE SERVICIOS · LA PAZ, BOLIVIA</span>
+    <h2>Tarifas fáciles de consultar.</h2>
+    <p>Referencias claras para orientar tu cotización, sin perder de vista el diagnóstico.</p>
+  </div>
+  <span class="service-prices-hero-icon" aria-hidden="true">Bs</span>
+</section>
+
+<section class="service-prices-stats">
+  <article class="stat-card">
+    <span class="stat-icon blue">▤</span>
+    <span class="service-prices-stat-copy"><span class="stat-label">Servicios en el tarifario</span><strong>{{ prices.length }}</strong><small>Incluye tus servicios personalizados</small></span>
+  </article>
+  <article class="stat-card">
+    <span class="stat-icon green">Bs</span>
+    <span class="service-prices-stat-copy"><span class="stat-label">Con precio de referencia</span><strong>{{ pricedCount }}</strong><small>Bolivianos (Bs)</small></span>
+  </article>
+  <article class="stat-card">
+    <span class="stat-icon orange">!</span>
+    <span class="service-prices-stat-copy"><span class="stat-label">A cotizar</span><strong>{{ quoteCount }}</strong><small>Precio vacío hasta diagnosticar</small></span>
+  </article>
+</section>
+
+@if (errorMessage) { <div class="alert alert-error" role="alert">{{ errorMessage }}</div> }
+@if (successMessage) { <div class="alert alert-success" role="status">{{ successMessage }}</div> }
+
+<div class="service-prices-workspace">
+  <section class="service-prices-panel service-prices-list">
+    <div class="service-prices-panel-heading">
+      <div>
+        <h2>Tarifario de servicios</h2>
+        <p>{{ filteredPrices.length }} servicios · valores en bolivianos</p>
+      </div>
+      <button class="service-prices-refresh" type="button" (click)="loadPrices()" [disabled]="loading">↻ Actualizar</button>
+    </div>
+    <div class="service-price-filters">
+      <input aria-label="Buscar servicios" name="serviceSearch" [(ngModel)]="searchTerm" placeholder="⌕  Buscar servicio…">
+      <select aria-label="Filtrar por categoría" name="serviceCategoryFilter" [(ngModel)]="categoryFilter">
+        <option value="">Todas las categorías</option>
+        @for (category of categories; track category) { <option [value]="category">{{ category }}</option> }
+      </select>
+    </div>
+    <div class="service-prices-notice">
+      <span aria-hidden="true">ⓘ</span>
+      <p><strong>Precios orientativos.</strong> Se conservan los precios registrados. El cambio de aceite está en Bs 396, promedio simple de Bs 361 y Bs 430 (redondeado desde Bs 395,50). Los servicios sin precio quedan a cotizar.</p>
+    </div>
+
+    @if (errorMessage) { <div class="service-prices-alert alert-error" role="alert">{{ errorMessage }}</div> }
+    @if (successMessage) { <div class="service-prices-alert alert-success" role="status">{{ successMessage }}</div> }
+    @if (loading) {
+      <div class="loading"><span class="spinner"></span> Cargando tarifario…</div>
+    } @else if (!filteredPrices.length) {
+      <div class="empty-state">{{ prices.length ? 'No hay servicios que coincidan con la búsqueda.' : 'No hay servicios en el tarifario. Agrega el primero con el formulario.' }}</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="service-prices-table">
+          <thead><tr><th>SERVICIO</th><th>PRECIO</th><th>ACCIÓN</th></tr></thead>
+          <tbody>
+            @for (price of filteredPrices; track price.id) {
+              <tr>
+                <td><span class="service-prices-name">{{ price.name }}</span><small class="service-prices-subline">{{ price.category }}</small></td>
+                <td>
+                  @if (price.price === null) {
+                    <span class="quote-badge">A cotizar</span>
+                  } @else {
+                    <span class="service-price-amount">Bs {{ price.price | number:'1.0-2' }}</span>
+                  }
+                </td>
+                <td class="service-prices-actions">
+                  <button class="service-prices-edit" type="button" (click)="edit(price)">Editar</button>
+                  <button class="delete-button" type="button" (click)="remove(price)">Eliminar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <section class="service-prices-panel service-prices-editor">
+    <div class="service-prices-panel-heading">
+      <div>
+        <h2>{{ editingId === null ? 'Agregar servicio' : 'Editar servicio' }}</h2>
+        <p>Completa los datos de tu tarifa</p>
+      </div>
+      <span class="service-prices-add-icon" aria-hidden="true">{{ editingId === null ? '＋' : '✎' }}</span>
+    </div>
+    <form class="service-prices-form" (ngSubmit)="save()">
+      <label>Nombre del servicio *<input name="serviceName" [(ngModel)]="form.name" required maxlength="120" placeholder="Ej. Afinado de motor"></label>
+      <div class="service-prices-field-row">
+        <label>Categoría *
+          <select name="serviceCategory" [(ngModel)]="form.category" required>
+            @for (category of categories; track category) { <option [value]="category">{{ category }}</option> }
+          </select>
+        </label>
+        <label>Precio en Bs<input name="servicePrice" [(ngModel)]="form.price" type="number" min="0" step="0.01" placeholder="A cotizar"></label>
+      </div>
+      <button class="service-prices-submit" type="submit" [disabled]="saving">{{ editingId === null ? '＋ Agregar servicio' : 'Guardar cambios' }}</button>
+      @if (editingId !== null) { <button class="service-prices-cancel" type="button" (click)="cancelEdit()">Cancelar edición</button> }
+    </form>
+    <div class="service-prices-editor-foot">Deja el precio vacío cuando el trabajo requiera diagnóstico o cotización.</div>
+  </section>
+</div>

@@ -21,11 +21,13 @@
   <main class="main">
     <header class="topbar">
       <div><span class="eyebrow">TALLER DE FRENOS</span><h1>{{ sections.find(s => s.id === section)?.title }}</h1></div>
-      <button class="refresh-button" (click)="reload()" [disabled]="loading">↻ <span>Actualizar</span></button>
+      @if (section !== 'service-prices') {
+        <button class="refresh-button" (click)="reload()" [disabled]="loading">↻ <span>Actualizar</span></button>
+      }
     </header>
 
-    @if (errorMessage) { <div class="alert alert-error" role="alert">{{ errorMessage }}</div> }
-    @if (successMessage) { <div class="alert alert-success" role="status">{{ successMessage }}</div> }
+    @if (errorMessage && section !== 'service-prices') { <div class="alert alert-error" role="alert">{{ errorMessage }}</div> }
+    @if (successMessage && section !== 'service-prices') { <div class="alert alert-success" role="status">{{ successMessage }}</div> }
     @if (loading) { <div class="loading"><span class="spinner"></span> Cargando información…</div> }
 
     @if (!loading && section === 'dashboard') {
@@ -397,6 +399,9 @@
         </tbody></table></div> }
       </section>
     }
+
+    @if (!loading && section === 'service-prices') { <app-service-prices></app-service-prices> }
+
     <footer class="footer">BuenFreno · Sistema inicial de control de taller · Guarda tus respaldos regularmente.</footer>
   </main>
 </div>

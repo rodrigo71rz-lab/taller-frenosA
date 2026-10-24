@@ -124,6 +124,20 @@ const definitions = {
       JOIN vehicle_types vt ON vt.id = m.vehicle_type_id
       ORDER BY vt.name, m.position`,
   },
+  servicePrices: {
+    table: 'service_prices',
+    fields: {
+      name: { kind: 'text', required: true, max: 120 },
+      category: { kind: 'text', required: true, max: 40 },
+      price: { kind: 'number', min: 0 },
+      notes: { kind: 'text', max: 600 },
+      source_label: { kind: 'text', max: 120 },
+      source_url: { kind: 'url', max: 500 },
+    },
+    list: `SELECT id, name, category, price, notes, source_label, source_url
+      FROM service_prices
+      ORDER BY category, name`,
+  },
 };
 
 function validate(body, fields) {
@@ -160,6 +174,23 @@ function validate(body, fields) {
         errors.push(`${name} debe ser un número igual o mayor a ${rule.min}.`);
       } else {
         values[name] = value;
+      }
+    } else if (rule.kind === 'url') {
+      if (typeof raw !== 'string') {
+        errors.push(`${name} debe ser una dirección web válida.`);
+        continue;
+      }
+      let value;
+      try {
+        value = new URL(raw.trim());
+      } catch {
+        errors.push(`${name} debe ser una dirección web válida.`);
+        continue;
+      }
+      if (!['http:', 'https:'].includes(value.protocol) || raw.trim().length > rule.max) {
+        errors.push(`${name} debe ser una dirección HTTP o HTTPS de hasta ${rule.max} caracteres.`);
+      } else {
+        values[name] = value.toString();
       }
     } else if (rule.kind === 'enum') {
       if (!rule.values.includes(raw)) errors.push(`${name} no tiene un valor permitido.`);

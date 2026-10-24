@@ -2,11 +2,12 @@ import { DecimalPipe } from '@angular/common';
 import { ChangeDetectorRef } from '@angular/core';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ServicePricesComponent } from './service-prices.component';
 import { VehicleSimulatorComponent } from './vehicle-simulator.component';
 import { WindTunnelComponent } from './wind-tunnel.component';
 import { ApiService, Customer, Dashboard, Job, JobPayment, MaintenanceSequence, Part, VehicleType } from './api.service';
 
-type Section = 'dashboard' | 'customers' | 'inventory' | 'jobs' | 'vehicles' | 'maintenance' | 'control-systems' | 'wind-tunnel' | 'vehicle-simulator';
+type Section = 'dashboard' | 'customers' | 'inventory' | 'jobs' | 'vehicles' | 'maintenance' | 'service-prices' | 'control-systems' | 'wind-tunnel' | 'vehicle-simulator';
 type SimulationStatus = 'normal' | 'warning' | 'critical' | 'inactive';
 type SimulationSensorKey = 'brakeFluid' | 'batteryVoltage' | 'oilPressure' | 'airPressure' | 'exhaustCO' | 'fuelPressure' | 'throttle' | 'engineTemperature';
 
@@ -34,7 +35,7 @@ interface SimulationAlert {
 }
 
 @Component({
-  imports: [DecimalPipe, FormsModule, VehicleSimulatorComponent, WindTunnelComponent],
+  imports: [DecimalPipe, FormsModule, ServicePricesComponent, VehicleSimulatorComponent, WindTunnelComponent],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -150,6 +151,7 @@ export class App implements OnInit {
     { id: 'customers', title: 'Clientes', icon: '♙' },
     { id: 'vehicles', title: 'Tipos de carro', icon: '▰' },
     { id: 'maintenance', title: 'Mantenimiento', icon: '↻' },
+    { id: 'service-prices', title: 'Precios de servicios', icon: 'Bs' },
     { id: 'control-systems', title: 'Control de sistemas', icon: '◉' },
     { id: 'wind-tunnel', title: 'Túnel de viento', icon: '○' },
     { id: 'vehicle-simulator', title: 'Simulador de vehículo', icon: '◈' },

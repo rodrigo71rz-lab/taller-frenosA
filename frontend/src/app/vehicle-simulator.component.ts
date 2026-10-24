@@ -3,7 +3,8 @@ import { ChangeDetectorRef, Component, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 type Climate = 'Templado' | 'Caluroso' | 'Frío' | 'Lluvioso';
-type Fault = 'oil' | 'temperature' | 'filter' | 'check' | 'battery' | 'brakes';
+type Fault = 'oil' | 'temperature' | 'filter' | 'check' | 'battery' | 'brakes' | 'tires';
+type FaultSeverity = 'low' | 'medium' | 'high';
 type Service = 'oil' | 'air' | 'coolant' | 'overhaul';
 
 interface MaintenanceOption {
@@ -11,6 +12,12 @@ interface MaintenanceOption {
   title: string;
   cost: number;
   detail: string;
+}
+
+interface FaultOption {
+  key: Fault;
+  icon: string;
+  label: string;
 }
 
 @Component({
@@ -25,6 +32,12 @@ export class VehicleSimulatorComponent implements OnDestroy {
   fuel = 85;
   oilHealth = 76;
   filterRestriction = 24;
+  engineHealth = 96;
+  tireHealth = 92;
+  brakeHealth = 84;
+  batteryHealth = 94;
+  timeScale = 1;
+  faultSeverity: FaultSeverity = 'medium';
   elapsedSeconds = 0;
   toastMessage = '';
 
@@ -40,7 +53,31 @@ export class VehicleSimulatorComponent implements OnDestroy {
     { key: 'coolant', title: 'Cool-Gard Purga', cost: 140, detail: 'Purga el sistema de refrigeración' },
     { key: 'overhaul', title: 'Overhaul de motor', cost: 2100, detail: 'Restablece los valores del motor' },
   ];
+  readonly faultOptions: FaultOption[] = [
+    { key: 'oil', icon: '●', label: 'Presión' },
+    { key: 'temperature', icon: '♨', label: 'Temp.' },
+    { key: 'filter', icon: '▼', label: 'Filtro' },
+    { key: 'check', icon: '⚙', label: 'Check' },
+    { key: 'battery', icon: '▰', label: 'Batería' },
+    { key: 'brakes', icon: '⬟', label: 'Frenos' },
+    { key: 'tires', icon: '◉', label: 'Llantas' },
+  ];
+  readonly faultLabels: Record<Fault, string> = {
+    oil: 'Presión de aceite',
+    temperature: 'Temperatura',
+    filter: 'Filtro de aire',
+    check: 'Motor / ECU',
+    battery: 'Batería',
+    brakes: 'Frenos',
+    tires: 'Neumáticos',
+  };
+  readonly faultSeverities: Record<FaultSeverity, string> = {
+    low: 'Leve',
+    medium: 'Media',
+    high: 'Alta',
+  };
   readonly faults = new Set<Fault>(['battery']);
+  readonly severityByFault: Partial<Record<Fault, FaultSeverity>> = { battery: 'medium' };
   readonly selectedServices = new Set<Service>();
 
   private elapsedTimer: ReturnType<typeof setInterval> | null = null;
@@ -64,16 +101,65 @@ export class VehicleSimulatorComponent implements OnDestroy {
     const temperature = this.engineRunning
       ? this.climateTemperatures[this.climate] + 14 + this.throttle * 0.19
       : this.climateTemperatures[this.climate];
-    return Math.min(125, temperature + (this.faults.has('temperature') ? 18 : 0));
+    return Math.min(125, temperature + (this.faults.has('temperature') ? this.temperatureFaultImpact : 0));
   }
 
   get oilPressure(): number {
     const pressure = this.engineRunning ? 0.65 + this.rpm / 1900 : 0;
-    return pressure * (this.faults.has('oil') ? 0.28 : 1);
+    return pressure * (this.faults.has('oil') ? this.oilPressureFaultFactor : 1);
   }
 
   get engineHours(): number {
     return 1248.5 + this.elapsedSeconds / 3600;
+  }
+
+  get activeFaults(): Fault[] {
+    return [...this.faults];
+  }
+
+  faultSeverityFor(fault: Fault): FaultSeverity {
+    return this.severityByFault[fault] ?? 'medium';
+  }
+
+  private faultImpactFor(fault: Fault): number {
+    const severity = this.faultSeverityFor(fault);
+    if (severity === 'low') return 8;
+    if (severity === 'high') return 38;
+    return 20;
+  }
+
+  get temperatureFaultImpact(): number {
+    const severity = this.faultSeverityFor('temperature');
+    if (severity === 'low') return 8;
+    if (severity === 'high') return 25;
+    return 16;
+  }
+
+  get oilPressureFaultFactor(): number {
+    const severity = this.faultSeverityFor('oil');
+    if (severity === 'low') return 0.65;
+    if (severity === 'high') return 0.25;
+    return 0.45;
+  }
+
+  get engineCondition(): number {
+    return Math.max(0, this.engineHealth - (this.faults.has('check') ? this.faultImpactFor('check') : 0));
+  }
+
+  get tireCondition(): number {
+    return Math.max(0, this.tireHealth - (this.faults.has('tires') ? this.faultImpactFor('tires') : 0));
+  }
+
+  get brakeCondition(): number {
+    return Math.max(0, this.brakeHealth - (this.faults.has('brakes') ? this.faultImpactFor('brakes') : 0));
+  }
+
+  get batteryCondition(): number {
+    return Math.max(0, this.batteryHealth - (this.faults.has('battery') ? this.faultImpactFor('battery') : 0));
+  }
+
+  get filterCondition(): number {
+    return Math.min(100, this.filterRestriction + (this.faults.has('filter') ? this.faultImpactFor('filter') : 0));
   }
 
   get boostPressure(): number {
@@ -90,11 +176,7 @@ export class VehicleSimulatorComponent implements OnDestroy {
     this.engineRunning = !this.engineRunning;
     if (this.engineRunning) {
       this.elapsedTimer = setInterval(() => {
-        this.elapsedSeconds += 60;
-        this.fuel = Math.max(0, this.fuel - (0.03 + this.throttle * 0.0018));
-        this.oilHealth = Math.max(0, this.oilHealth - 0.002);
-        this.filterRestriction = Math.min(100, this.filterRestriction + 0.004);
-        this.changeDetector.markForCheck();
+        this.advanceTime(this.timeScale / 60, false);
       }, 1000);
       this.showToast('Motor encendido. Telemetría en ejecución.');
     } else {
@@ -106,9 +188,11 @@ export class VehicleSimulatorComponent implements OnDestroy {
   toggleFault(fault: Fault): void {
     if (this.faults.has(fault)) {
       this.faults.delete(fault);
+      delete this.severityByFault[fault];
       this.showToast('Testigo de demostración apagado.');
     } else {
       this.faults.add(fault);
+      this.severityByFault[fault] = this.faultSeverity;
       this.showToast('Testigo de demostración activado.');
     }
   }
@@ -121,17 +205,24 @@ export class VehicleSimulatorComponent implements OnDestroy {
     }
 
     this.selectedServices.add(service);
-    if (service === 'oil') this.oilHealth = 100;
-    if (service === 'air') this.filterRestriction = 2;
-    if (service === 'coolant') this.faults.delete('temperature');
+    if (service === 'oil') {
+      this.oilHealth = 100;
+      this.clearFault('oil');
+    }
+    if (service === 'air') {
+      this.filterRestriction = 2;
+      this.clearFault('filter');
+    }
+    if (service === 'coolant') this.clearFault('temperature');
     if (service === 'overhaul') {
       this.oilHealth = 100;
       this.filterRestriction = 2;
+      this.engineHealth = 100;
       this.fuel = 85;
-      this.faults.delete('oil');
-      this.faults.delete('temperature');
-      this.faults.delete('filter');
-      this.faults.delete('check');
+      this.clearFault('oil');
+      this.clearFault('temperature');
+      this.clearFault('filter');
+      this.clearFault('check');
     }
     this.showToast('Servicio preventivo aplicado a la simulación.');
   }
@@ -161,7 +252,56 @@ export class VehicleSimulatorComponent implements OnDestroy {
   }
 
   get filterStatus(): string {
-    return this.filterRestriction > 70 ? 'critical' : this.filterRestriction > 35 ? 'warning' : '';
+    return this.filterCondition > 70 ? 'critical' : this.filterCondition > 35 ? 'warning' : '';
+  }
+
+  get engineHealthStatus(): string {
+    return this.engineCondition < 30 ? 'critical' : this.engineCondition < 65 ? 'warning' : '';
+  }
+
+  get tireHealthStatus(): string {
+    return this.tireCondition < 30 ? 'critical' : this.tireCondition < 65 ? 'warning' : '';
+  }
+
+  get brakeHealthStatus(): string {
+    return this.brakeCondition < 30 ? 'critical' : this.brakeCondition < 65 ? 'warning' : '';
+  }
+
+  get batteryHealthStatus(): string {
+    return this.batteryCondition < 30 ? 'critical' : this.batteryCondition < 65 ? 'warning' : '';
+  }
+
+  generateRandomFault(): void {
+    const availableFaults = this.faultOptions.filter(({ key }) => !this.faults.has(key));
+    if (!availableFaults.length) {
+      this.showToast('Ya están activas todas las fallas disponibles.');
+      return;
+    }
+
+    const fault = availableFaults[Math.floor(Math.random() * availableFaults.length)];
+    this.faults.add(fault.key);
+    this.severityByFault[fault.key] = this.faultSeverity;
+    this.showToast(`Falla aleatoria: ${this.faultLabels[fault.key]} (${this.faultSeverities[this.faultSeverity].toLowerCase()}).`);
+  }
+
+  resetFaults(): void {
+    this.faults.clear();
+    for (const fault of this.faultOptions) delete this.severityByFault[fault.key];
+    this.showToast('Fallas de la simulación restablecidas.');
+  }
+
+  advanceTime(hours: number, notify = true): void {
+    if (!Number.isFinite(hours) || hours <= 0) return;
+    const simulatedMinutes = hours * 60;
+    this.elapsedSeconds += hours * 3600;
+    this.fuel = Math.max(0, this.fuel - (0.03 + this.throttle * 0.0018) * simulatedMinutes);
+    this.oilHealth = Math.max(0, this.oilHealth - 0.002 * simulatedMinutes);
+    this.filterRestriction = Math.min(100, this.filterRestriction + 0.004 * simulatedMinutes);
+    this.engineHealth = Math.max(0, this.engineHealth - 0.0003 * simulatedMinutes);
+    this.tireHealth = Math.max(0, this.tireHealth - 0.0008 * simulatedMinutes);
+    this.brakeHealth = Math.max(0, this.brakeHealth - 0.0006 * simulatedMinutes);
+    this.changeDetector.markForCheck();
+    if (notify) this.showToast(`Tiempo de uso simulado: +${hours < 1 ? `${Math.round(hours * 60)} min` : `${hours} h`}.`);
   }
 
   climateChanged(climate: Climate): void {
@@ -188,5 +328,10 @@ export class VehicleSimulatorComponent implements OnDestroy {
       clearInterval(this.elapsedTimer);
       this.elapsedTimer = null;
     }
+  }
+
+  private clearFault(fault: Fault): void {
+    this.faults.delete(fault);
+    delete this.severityByFault[fault];
   }
 }

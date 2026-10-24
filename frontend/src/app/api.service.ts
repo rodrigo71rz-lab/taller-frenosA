@@ -64,6 +64,14 @@ export interface MaintenanceSequence {
   details: string | null;
 }
 
+export interface ServicePrice {
+  id: number;
+  name: string;
+  category: string;
+  price: number | null;
+  notes: string | null;
+}
+
 export interface Dashboard {
   customers: number;
   parts: number;
@@ -108,6 +116,10 @@ export class ApiService {
 
   maintenance(): Promise<MaintenanceSequence[]> {
     return firstValueFrom(this.http.get<MaintenanceSequence[]>(`${this.baseUrl}/maintenance`));
+  }
+
+  servicePrices(): Promise<ServicePrice[]> {
+    return firstValueFrom(this.http.get<ServicePrice[]>(`${this.baseUrl}/servicePrices`));
   }
 
   create<T = unknown>(resource: string, data: object): Promise<T> {

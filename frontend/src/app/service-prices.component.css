@@ -1,0 +1,72 @@
+:host { display: block; }
+.service-prices-hero { position: relative; overflow: hidden; min-height: 124px; margin-bottom: 14px; padding: 22px 27px; display: flex; align-items: center; justify-content: space-between; border-radius: 14px; background: linear-gradient(110deg, #173e6b, #286293); color: #fff; box-shadow: 0 8px 20px #173e6b1c; }
+.service-prices-hero::after { position: absolute; right: 67px; bottom: -51px; color: #ffffff0c; content: 'Bs'; font-size: 180px; font-weight: 800; line-height: 1; pointer-events: none; }
+.service-prices-eyebrow { color: #c5d7e9; font-size: 10px; font-weight: 700; letter-spacing: .13em; }
+.service-prices-hero h2 { margin: 7px 0 4px; font-size: 21px; letter-spacing: -.02em; }
+.service-prices-hero p { margin: 0; color: #dce7f2; font-size: 12px; }
+.service-prices-hero-icon { z-index: 1; width: 62px; height: 62px; display: grid; place-items: center; border: 1px solid #ffffff57; border-radius: 18px; color: #fff; font-size: 24px; font-weight: 700; }
+.service-prices-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin: 14px 0; }
+.service-prices-stats .stat-card { min-height: 76px; padding: 12px 15px; display: flex; align-items: center; gap: 11px; border-radius: 12px; box-shadow: 0 3px 10px #182b3e06; }
+.service-prices-stats .stat-icon { width: 37px; height: 37px; border-radius: 11px; font-size: 13px; font-weight: 700; }
+.service-prices-stat-copy { min-width: 0; display: grid; }
+.service-prices-stats .stat-label { font-size: 10px; }
+.service-prices-stats .stat-card strong { margin-top: 2px; font-size: 20px; }
+.service-prices-stat-copy small { margin-top: 2px; color: #98a1ad; font-size: 9px; }
+.service-prices-workspace { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(275px, .9fr); gap: 14px; align-items: start; }
+.service-prices-panel { min-width: 0; padding: 17px 18px; border: 1px solid #e5ebf1; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #182b3e06; }
+.service-prices-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.service-prices-panel-heading h2 { margin: 0; color: #202d3d; font-size: 15px; letter-spacing: -.02em; }
+.service-prices-panel-heading p { margin: 3px 0 0; color: #8693a3; font-size: 10px; }
+.service-prices-refresh { min-height: 33px; padding: 7px 10px; border: 1px solid #dce4ed; border-radius: 7px; background: #fff; color: #43546a; font: inherit; font-size: 10px; cursor: pointer; }
+.service-prices-refresh:disabled { opacity: .55; cursor: wait; }
+.service-price-filters { display: grid; grid-template-columns: minmax(120px, 1fr) minmax(135px, .48fr); gap: 9px; margin-bottom: 11px; }
+.service-price-filters input, .service-price-filters select, .service-prices-form input, .service-prices-form select { width: 100%; min-width: 0; min-height: 36px; padding: 7px 9px; border: 1px solid #dfe6ed; border-radius: 7px; outline: none; background: #fff; color: #33455a; font: inherit; font-size: 10px; }
+.service-price-filters input:focus, .service-price-filters select:focus, .service-prices-form input:focus, .service-prices-form select:focus { border-color: #6792bf; box-shadow: 0 0 0 2px #e8f1fa; }
+.service-prices-notice { display: flex; gap: 9px; margin-bottom: 10px; padding: 10px 11px; border: 1px solid #f0ddb6; border-radius: 8px; background: #fff9eb; color: #805d22; font-size: 10px; }
+.service-prices-notice > span { flex: 0 0 auto; font-size: 14px; }
+.service-prices-notice p { margin: 0; }
+.service-prices-alert { margin-bottom: 10px; padding: 9px 11px; border-radius: 7px; font-size: 10px; }
+.service-prices-alert.alert-error { border: 1px solid #f1caca; background: #fff3f3; color: #a23e3e; }
+.service-prices-alert.alert-success { border: 1px solid #cbe9d8; background: #effaf3; color: #287149; }
+.service-prices-table { width: 100%; border-collapse: collapse; text-align: left; }
+.service-prices-table th { padding: 9px 8px; border-bottom: 1px solid #edf0f3; color: #8792a0; font-size: 9px; font-weight: 700; letter-spacing: .08em; white-space: nowrap; }
+.service-prices-table td { padding: 10px 8px; border-bottom: 1px solid #f0f2f5; color: #586576; font-size: 10px; vertical-align: middle; }
+.service-prices-table tbody tr:last-child td { border-bottom: 0; }
+.service-prices-table tbody tr:hover { background: #f8fafc; }
+.service-prices-name { color: #253346; font-size: 11px; font-weight: 650; }
+.service-prices-subline { display: block; margin-top: 3px; color: #8995a4; font-size: 9px; }
+.service-price-amount { color: #1e4167; font-size: 13px; font-weight: 750; white-space: nowrap; }
+.quote-badge { padding: 4px 7px; border-radius: 20px; background: #fff4e5; color: #a66a21; font-size: 9px; white-space: nowrap; }
+.service-prices-actions { text-align: right; white-space: nowrap; }
+.service-prices-edit, .service-prices-cancel { padding: 4px 6px; border: 0; background: transparent; color: #2e679f; font: inherit; font-size: 10px; cursor: pointer; }
+.service-prices-edit:hover, .service-prices-cancel:hover { text-decoration: underline; }
+.service-prices-editor { padding: 17px; }
+.service-prices-add-icon { color: #8792a0; font-size: 18px; }
+.service-prices-form { display: grid; gap: 10px; }
+.service-prices-form label { display: grid; gap: 5px; color: #566477; font-size: 10px; font-weight: 650; }
+.service-prices-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.service-prices-submit { width: 100%; min-height: 37px; margin-top: 2px; padding: 0 12px; border: 0; border-radius: 7px; background: #214f80; color: #fff; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; }
+.service-prices-submit:hover { background: #193e66; }
+.service-prices-submit:disabled { opacity: .55; cursor: wait; }
+.service-prices-cancel { justify-self: center; }
+.service-prices-editor-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid #edf0f3; color: #929ca9; font-size: 9px; }
+.service-prices-panel .loading, .service-prices-panel .empty-state { padding: 22px 10px; color: #8894a2; font-size: 11px; text-align: center; }
+@media (max-width: 1200px) {
+  .service-prices-workspace { grid-template-columns: minmax(0, 1fr); }
+  .service-prices-editor { order: 1; }
+  .service-prices-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .service-prices-editor-foot { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .service-prices-hero { min-height: 110px; padding: 18px; }
+  .service-prices-hero-icon { display: none; }
+  .service-prices-stats { gap: 7px; }
+  .service-prices-stats .stat-card { min-height: 68px; padding: 9px 7px; gap: 7px; }
+  .service-prices-stats .stat-icon { width: 30px; height: 30px; }
+  .service-prices-stats .stat-label { font-size: 9px; }
+  .service-prices-stats .stat-card strong { font-size: 17px; }
+  .service-prices-stats .stat-card small { display: none; }
+  .service-prices-panel { padding: 14px 10px; }
+  .service-prices-form, .service-price-filters { grid-template-columns: 1fr; }
+  .service-prices-table th, .service-prices-table td { padding: 9px 6px; }
+}

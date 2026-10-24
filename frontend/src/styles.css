@@ -62,6 +62,303 @@ button { font-family: inherit; }
 .payments-table td { padding: 8px; font-size: 10px; }
 .payment-empty, .payment-complete { color: #788596; font-size: 11px; }
 .payment-complete { margin: 15px 0; color: #287149; }
+
+:root {
+  --theme-navy: #102d3c;
+  --theme-navy-soft: #174555;
+  --theme-teal: #1d6873;
+  --theme-teal-light: #e6f2f1;
+  --theme-gold: #e4a94d;
+  --theme-background: #f2f6f7;
+  --theme-surface: #fff;
+  --theme-border: #e1e9eb;
+  --theme-text: #193b49;
+  --theme-muted: #78929b;
+}
+
+body { background: var(--theme-background); color: var(--theme-text); }
+.layout .sidebar { background: var(--theme-navy); border-color: #254552; }
+.layout .brand { color: #fff; }
+.layout .brand-mark { background: var(--theme-gold); color: var(--theme-navy); }
+.layout .brand small, .layout .nav-label { color: #90adb6; }
+.layout .nav-item { color: #c1d5da; }
+.layout .nav-item:hover { background: #173e4c; }
+.layout .nav-item.active { background: #1d4b5a; color: #fff; }
+.layout .nav-icon, .layout .nav-item.active .nav-icon { color: #b0c9ce; }
+.layout .nav-count { background: #47391f; color: #f1c477; }
+.layout .sidebar-bottom { border-color: #254552; color: #a6c3c9; }
+.layout .main { color: var(--theme-text); }
+.layout .topbar h1 { color: #153745; }
+.layout .eyebrow { color: var(--theme-muted); }
+.layout .refresh-button { border-color: var(--theme-border); color: #42636d; }
+.layout .welcome,
+.layout app-service-prices .service-prices-hero {
+  background: linear-gradient(110deg, var(--theme-navy-soft), #247181);
+  color: #fff;
+}
+.layout .welcome .eyebrow,
+.layout app-service-prices .service-prices-eyebrow { color: #b9dadd; }
+.layout .welcome p,
+.layout app-service-prices .service-prices-hero p { color: #d4e7e8; }
+.layout .stat-card,
+.layout .panel,
+.layout app-service-prices .service-prices-panel {
+  border-color: var(--theme-border);
+  background: var(--theme-surface);
+}
+.layout .stat-card strong,
+.layout .panel-heading h2,
+.layout app-service-prices .service-prices-panel-heading h2,
+.layout app-service-prices .service-prices-name { color: var(--theme-text); }
+.layout .stat-label,
+.layout .panel-heading p,
+.layout app-service-prices .service-prices-panel-heading p,
+.layout app-service-prices .service-prices-subline { color: var(--theme-muted); }
+.layout .stat-icon.blue,
+.layout .stat-icon.purple,
+.layout app-service-prices .stat-icon.blue {
+  background: var(--theme-teal-light);
+  color: #347a74;
+}
+.layout .stat-icon.orange,
+.layout app-service-prices .stat-icon.orange { background: #fff3df; color: #a6752d; }
+.layout .stat-icon.green,
+.layout app-service-prices .stat-icon.green { background: #e6f3ed; color: #37775b; }
+.layout .text-button,
+.layout .service-prices-edit,
+.layout .service-prices-cancel { color: var(--theme-teal); }
+.layout .primary-button,
+.layout app-service-prices .service-prices-submit { background: var(--theme-teal); }
+.layout .primary-button:hover,
+.layout app-service-prices .service-prices-submit:hover { background: #175661; }
+.layout input:not([type="range"]),
+.layout select,
+.layout textarea,
+.layout .service-price-filters input,
+.layout .service-price-filters select,
+.layout .service-prices-form input,
+.layout .service-prices-form select {
+  border-color: #d9e5e7;
+  background-color: #fff;
+  color: #2c4a53;
+}
+.layout input:focus,
+.layout select:focus,
+.layout textarea:focus,
+.layout .service-price-filters input:focus,
+.layout .service-price-filters select:focus,
+.layout .service-prices-form input:focus,
+.layout .service-prices-form select:focus {
+  border-color: #4d9997;
+  box-shadow: 0 0 0 2px #e1f0ef;
+}
+.layout label,
+.layout app-service-prices .service-prices-form label { color: #58757b; }
+.layout table th { color: #84979c; }
+.layout table td { border-color: #edf1f2; color: #4d6871; }
+.layout tbody tr:hover { background: #f5f9f8; }
+.layout .badge.en_proceso,
+.layout .step-number,
+.layout .print-button { background: #e6f2f1; color: #347a74; }
+.layout .alert-success { border-color: #c9e4d7; background: #edf7f1; color: #34775a; }
+.layout .spinner { border-top-color: var(--theme-teal); }
+.layout app-service-prices .service-prices-panel { box-shadow: 0 5px 17px #173b4709; }
+.layout app-service-prices .service-prices-notice {
+  border-color: #efdfbf;
+  background: #fff8ea;
+  color: #80642f;
+}
+.layout app-service-prices .service-price-amount { color: #193d4b; }
+.layout app-service-prices .service-prices-table th { color: #84979c; }
+.layout app-service-prices .service-prices-table td { color: #4d6871; }
+.layout app-service-prices .service-prices-refresh { border-color: var(--theme-border); color: #42636d; }
+.layout app-service-prices .quote-badge { background: #fff3df; color: #986c2b; }
+.layout app-service-prices .service-prices-edit,
+.layout app-service-prices .service-prices-cancel { color: var(--theme-teal); }
+.layout app-service-prices .delete-button { color: #a75353; }
+.layout app-service-prices .delete-button:hover { background: #fff0f0; }
+
+app-wind-tunnel .wind-tunnel-controls h2,
+app-wind-tunnel .wind-speed-label strong,
+app-wind-tunnel .wind-tunnel-telemetry h2 span,
+app-wind-tunnel .wind-force-card > strong,
+app-wind-tunnel .wind-tunnel-caption strong { color: #61c3ba; }
+app-wind-tunnel .wind-flow path { stroke: #3b9d99; }
+app-wind-tunnel .wind-flow path:nth-child(3n) { stroke: #78d2c9; }
+app-wind-tunnel .wind-speed-slider { accent-color: #4cb5ac; }
+app-wind-tunnel .wind-view-toggle button.active { background: #1d6873; }
+app-wind-tunnel .wind-view-toggle button:focus-visible,
+app-wind-tunnel .wind-speed-slider:focus-visible { outline-color: #95ded8; }
+app-vehicle-simulator .vehicle-sim { --vs-cyan: #5bc4bb; --vs-orange: #e4a94d; }
+app-root app-vehicle-simulator .vehicle-sim-climate-label { color: #6dc9c2; }
+
+app-root .layout .sidebar { background: var(--theme-navy); border-right-color: #254552; }
+app-root .layout .brand { color: #fff; }
+app-root .layout .brand-mark { background: var(--theme-gold); color: var(--theme-navy); }
+app-root .layout .brand small,
+app-root .layout .nav-label { color: #90adb6; }
+app-root .layout .nav-item { color: #c1d5da; }
+app-root .layout .nav-item:hover { background: #173e4c; }
+app-root .layout .nav-item.active { background: #1d4b5a; color: #fff; }
+app-root .layout .nav-icon,
+app-root .layout .nav-item.active .nav-icon { color: #b0c9ce; }
+app-root .layout .sidebar-bottom { border-color: #254552; color: #a6c3c9; }
+app-root .layout .topbar h1 { color: #153745; }
+app-root .layout .refresh-button { border-color: var(--theme-border); color: #42636d; }
+app-root .layout .welcome { background: linear-gradient(110deg, var(--theme-navy-soft), #247181); }
+app-root .layout .welcome .eyebrow { color: #b9dadd; }
+app-root .layout .welcome p { color: #d4e7e8; }
+app-root .layout .stat-card { border-color: var(--theme-border); background: #fff; }
+app-root .layout .stat-card strong { color: var(--theme-text); }
+app-root .layout .nav-count { background: #47391f; color: #f1c477; }
+app-root .layout .primary-button { background: var(--theme-teal); }
+app-root .layout .primary-button:hover { background: #175661; }
+app-root .layout .payment-button,
+app-root .layout .image-upload { border-color: #d4e3e4; color: var(--theme-teal); }
+app-root .layout .payment-button:hover,
+app-root .layout .image-upload:hover { background: var(--theme-teal-light); }
+app-root app-vehicle-simulator .vehicle-sim-service:nth-child(4) strong { color: var(--theme-gold); }
+app-root app-vehicle-simulator .vehicle-sim-metrics article:nth-child(3) i b { background: #5bc4bb; }
+app-root app-vehicle-simulator .vehicle-sim-wheel-far { opacity: .62; }
+app-root app-vehicle-simulator .vehicle-sim-wheel-near { filter: drop-shadow(0 2px 2px #030812aa); }
+app-root app-vehicle-simulator .vehicle-sim-witnesses { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+app-root app-vehicle-simulator .vehicle-sim-time-controls,
+app-root app-vehicle-simulator .vehicle-sim-fault-controls {
+  display: grid;
+  align-items: end;
+  gap: 8px;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-controls {
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 12px;
+}
+app-root app-vehicle-simulator .vehicle-sim-fault-controls {
+  grid-template-columns: minmax(90px, .7fr) minmax(130px, 1.2fr) minmax(110px, .9fr);
+  margin: 9px 0;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-controls label,
+app-root app-vehicle-simulator .vehicle-sim-fault-controls label {
+  display: grid;
+  gap: 5px;
+  color: #a6b5c9;
+  font-size: 9px;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-controls select,
+app-root app-vehicle-simulator .vehicle-sim-fault-controls select {
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid #33445d;
+  border-radius: 7px;
+  background: #1a273b;
+  color: #d4dfed;
+  font-size: 10px;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-buttons {
+  display: flex;
+  gap: 6px;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-buttons button,
+app-root app-vehicle-simulator .vehicle-sim-reset-faults,
+app-root app-vehicle-simulator .vehicle-sim-random-fault {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1px solid #34575c;
+  border-radius: 7px;
+  background: #153a3d;
+  color: #bce9df;
+  font: inherit;
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+app-root app-vehicle-simulator .vehicle-sim-time-buttons button:hover,
+app-root app-vehicle-simulator .vehicle-sim-reset-faults:hover { background: #1b4b4d; }
+app-root app-vehicle-simulator .vehicle-sim-random-fault {
+  border-color: #a27532;
+  background: #44351e;
+  color: #ffd27c;
+}
+app-root app-vehicle-simulator .vehicle-sim-random-fault:hover { background: #594522; }
+app-root app-vehicle-simulator .vehicle-sim-random-fault:disabled { opacity: .55; cursor: not-allowed; }
+app-root app-vehicle-simulator .vehicle-sim-wear-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid article {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #1e2a3e;
+  border-radius: 7px;
+  background: #0c1423;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid article > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid article span {
+  color: #9aabc1;
+  font-size: 8px;
+  font-weight: 650;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid article strong {
+  color: #f2f6fc;
+  font-size: 10px;
+  white-space: nowrap;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid i {
+  height: 4px;
+  margin-top: 7px;
+  display: block;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #1e2b40;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid i b {
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--vs-green);
+  transition: width .2s;
+}
+app-root app-vehicle-simulator .vehicle-sim-wear-grid .warning { color: var(--vs-orange) !important; }
+app-root app-vehicle-simulator .vehicle-sim-wear-grid .critical { color: var(--vs-red) !important; }
+app-root app-vehicle-simulator .vehicle-sim-wear-grid i b.warning { background: var(--vs-orange) !important; }
+app-root app-vehicle-simulator .vehicle-sim-wear-grid i b.critical { background: var(--vs-red) !important; }
+app-root app-vehicle-simulator .vehicle-sim-active-faults {
+  margin: 8px 0;
+  padding: 9px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #57313d;
+  border-radius: 8px;
+  background: #241822;
+}
+app-root app-vehicle-simulator .vehicle-sim-active-faults strong {
+  width: 100%;
+  color: #ffb3ad;
+  font-size: 9px;
+}
+app-root app-vehicle-simulator .vehicle-sim-active-faults span {
+  padding: 4px 6px;
+  border-radius: 12px;
+  background: #3a222a;
+  color: #ffc4b5;
+  font-size: 8px;
+}
+
+@media (max-width: 700px) {
+  app-root .layout .sidebar { background: var(--theme-navy); border-color: #254552; }
+  app-root app-vehicle-simulator .vehicle-sim-witnesses { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  app-root app-vehicle-simulator .vehicle-sim-fault-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  app-root app-vehicle-simulator .vehicle-sim-fault-controls label { grid-column: 1 / -1; }
+  app-root app-vehicle-simulator .vehicle-sim-time-controls { grid-template-columns: 1fr; }
+  app-root app-vehicle-simulator .vehicle-sim-time-buttons button { flex: 1; }
+  app-root app-vehicle-simulator .vehicle-sim-wear-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 600px) {
   .customer-profile { flex-wrap: wrap; }
   .customer-info { flex-basis: calc(100% - 70px); }
